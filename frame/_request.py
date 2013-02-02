@@ -6,6 +6,7 @@ class Request(object):
 	def __init__(self, environ):
 		self.__environ = environ
 		self.__parse(environ)
+		self.cookies = self.__parse_cookies(environ)
 
 	def __parse(self, environ):
 		self.headers = DotDict()
@@ -24,3 +25,12 @@ class Request(object):
 			else:
 				parsed_key = key.lower()
 				self.fcgi[parsed_key] = value
+
+	def __parse_cookies(self, environ):
+		result = DotDict()
+		if 'HTTP_COOKIE' in environ:
+			cookies = environ['HTTP_COOKIE'].split('; ')
+			for i in cookies:
+				key, value = i.strip().split('=', 1)
+				result[key] = value
+		return result

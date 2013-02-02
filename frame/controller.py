@@ -24,3 +24,7 @@ class Controller(object):
 	@property
 	def request(self):
 		return app.request
+
+	@property
+	def session(self):
+		return app.session

@@ -9,4 +9,7 @@ class DotDict(dict):
 			raise AttributeError(e)
 
 	def __setattr__(self, key, value):
-		self[key] = value
+		if isinstance(value, dict):
+			self[key] = DotDict(value)
+		else:
+			self[key] = value

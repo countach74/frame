@@ -6,10 +6,16 @@ import threading
 
 class Root(Controller):
 	def index(self):
-		return self.get_template('root/index.html').render()
+		return self.get_template('root/index.html').render(session=self.session)
 
-	def poo(self):
-		return "Oh boy. %s" % self.request.headers.cookie
+	def increase(self):
+		if 'num_visits' in self.session:
+			self.session['num_visits'] += 1
+		else:
+			self.session['num_visits'] = 1
+
+	def get_visits(self):
+		return self.session['num_visits']
 
 	def test(self, name, **kwargs):
 		response = ["Hmm, I don't know about this. %s" % name]
@@ -18,11 +24,21 @@ class Root(Controller):
 
 		return ''.join(response)
 
+
+class Messages(Controller):
+	def index(self, content_type='html'):
+		return "Messages go here. %s" % content_type
+
+	def show(self, slug, content_type='html'):
+		return "Slug: %s, format: %s" % (slug, content_type)
+
+
 frame.routes.connect("/", controller="root#index")
-frame.routes.connect("/test/{name}", controller="root#test")
-frame.routes.connect("/poo", controller="root#poo")
+frame.routes.connect("/increase", controller="root#increase")
+frame.routes.connect("/get_visits", controller="root#get_visits")
+frame.routes.resource('messages')
 
 frame.app.debug = True
 
-#app.start_fcgi()
-frame.app.start_http()
+#frame.start_fcgi()
+frame.start_http()

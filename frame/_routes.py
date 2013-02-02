@@ -30,5 +30,69 @@ class Routes(object):
 
 		self.mapper.connect(name, path, controller=controller, action=action, *args, **kwargs)
 		
+	def resource(self, controller):
+		uri_map = [
+			{
+				'uri': '/%s.{content_type}',
+				'action': 'index',
+				'method': 'GET',
+			},
+			{
+				'uri': '/%s',
+				'action': 'index',
+				'method': 'GET',
+			},
+			{
+                                'uri': '/%s',
+                                'action': 'create',
+				'method': 'POST',
+			},
+			{
+				'uri': '/%s/new.{content_type}',
+				'action': 'new',
+				'method': 'GET'
+			},
+			{
+				'uri': '/%s/new',
+				'action': 'new',
+				'method': 'GET',
+			},
+			{
+				'uri': '/%s/{slug}',
+				'action': 'update',
+				'method': 'PUT',
+			},
+			{
+				'uri': '/%s/{slug}',
+				'action': 'delete',
+				'method': 'DELETE',
+			},
+			{
+				'uri': '/%s/{slug}.{content_type}',
+				'action': 'show',
+				'method': 'GET',
+			},
+			{
+				'uri': '/%s/{slug}',
+				'action': 'show',
+				'method': 'GET',
+			},
+			{
+				'uri': '/%s/{slug}.{content_type}/edit',
+				'action': 'edit',
+				'method': 'GET',
+			},
+			{
+				'uri': '/%s/{slug}/edit',
+				'action': 'edit',
+				'method': 'GET',
+			},
+		]
+
+		for i in uri_map:
+			self.connect(
+				path=i['uri'] % controller,
+				controller='%s#%s' % (controller, i['action']),
+				conditions={'method': i['method']})
 
 routes = Routes()

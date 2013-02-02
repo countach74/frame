@@ -1,11 +1,13 @@
 from _request import Request
 from _response import Response
 from _routes import routes
+from _dotdict import DotDict
 from errors import HTTPError
 import traceback
 from jinja2 import Environment, ChoiceLoader, PackageLoader, FileSystemLoader
 import os
 import sys
+import sessions
 
 
 class App(object):
@@ -16,10 +18,20 @@ class App(object):
 		self.routes = routes
 		self.debug = debug
 
+		self.config = DotDict()
+		self.config.sessions = {
+			'enabled': True,
+			'key_name': 'FrameSession',
+			'expires': 168,  #Set session expiration to 1 week by default
+		}
+
 		# Setup Jinja2 environment
 		self.environment = Environment(loader=ChoiceLoader([
 			FileSystemLoader(template_dir),
 			PackageLoader('frame', 'templates')]))
+
+		# Setup session interface
+		self.session_interface = sessions.SessionInterface(self)
 
 	@property
 	def template_dir(self):
@@ -36,10 +48,10 @@ class App(object):
 		try:
 			match, data = routes.match(environ=environ)
 
-		# If TypeError occurs then no match was found; we should throw a 404.
-		except TypeError:
+		# If TypeError or AttributeError occurs then no match was found; we should throw a 404.
+		except (TypeError, AttributeError):
 			start_response('404 Not Found', [('Content-Type', 'text/html')])
-			yield self.environment.get_template('errors/404.html').render(path=environ['REQUEST_URI'], title='404 Not Found')
+			yield str(self.environment.get_template('errors/404.html').render(path=environ['REQUEST_URI'], title='404 Not Found'))
 			raise StopIteration
 
 		for key, value in data.items():
@@ -52,7 +64,13 @@ class App(object):
 			start_response(e.status, e.headers)
 			yield e.body
 		else:
-			yield self.response.render(self.request.fcgi.query_string, data)
+			self.session = self.session_interface.get_session()
+			rendered_response = str(self.response.render(self.request.fcgi.query_string, data))
+
+			# Save the session before yielding the response
+			self.session_interface.save_session(self.session)
+
+			yield rendered_response
 
 	def __call__(self, environ, start_response):
 		if self.debug:
@@ -66,7 +84,7 @@ class App(object):
 				start_response('500 Internal Server Error', [('Content-Type', 'text/html')])
 				e_type, e_value, e_tb = sys.exc_info()
 				tb = traceback.format_exception(e_type, e_value, e_tb)
-				yield self.environment.get_template('errors/500.html').render(title='500 Internal Server Error')
+				yield str(self.environment.get_template('errors/500.html').render(title='500 Internal Server Error'))
 
 	def start_fcgi(self):
 		from flup.server.fcgi import WSGIServer
