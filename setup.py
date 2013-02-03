@@ -10,5 +10,6 @@ setup(
 	description="A very simple, lightweight MVC-based web framework.",
 	license="GNU",
 	keywords="web framework mvc",
-	packages=['frame', 'frame.server']
+	packages=['frame', 'frame.server'],
+	package_data={'frame': ['templates/*.html', 'templates/errors/*.html']}
 )
