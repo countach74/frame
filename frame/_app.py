@@ -73,6 +73,7 @@ class App(object):
 
 	def _dispatch(self, environ):
 		self.request = Request(environ)
+		print environ
 
 		if environ['REQUEST_URI'].startswith(self.static_dir):
 			return self._get_static_content(environ['REQUEST_URI'])

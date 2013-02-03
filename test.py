@@ -51,8 +51,8 @@ frame.routes.connect("/get_visits", controller="root#get_visits")
 frame.routes.connect("/get_headers", controller="root#get_headers")
 frame.routes.resource('messages')
 
-#frame.app.post_processors.append(frame.postprocessors.gzip)
-frame.app.session_interface.backend = 'Memcache'
+frame.app.post_processors.append(frame.postprocessors.gzip)
+frame.app.session_interface.backend = 'Memory'
 
-#frame.start_fcgi()
-frame.start_http()
+frame.start_fcgi()
+#frame.start_http()

@@ -6,6 +6,7 @@ class Request(object):
 	def __init__(self, environ):
 		self.__environ = environ
 		self.__parse(environ)
+		self.__body = None
 		self.cookies = self.__parse_cookies(environ)
 
 	def __parse(self, environ):
@@ -34,3 +35,9 @@ class Request(object):
 				key, value = i.strip().split('=', 1)
 				result[key] = value
 		return result
+
+	@property
+	def body(self):
+		if self.__body is None:
+			self.__body = self.wsgi.input.read()
+		return self.__body

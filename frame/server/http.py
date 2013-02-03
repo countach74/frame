@@ -10,9 +10,17 @@ import os
 import traceback
 import cgi
 from jinja2 import Environment, PackageLoader, ChoiceLoader, FileSystemLoader
+from StringIO import StringIO
 
 # Needed for asynchronous server
 import select
+
+
+def parse_body(request):
+	try:
+		return request.split('\r\n\r\n', 1)[1]
+	except IndexError:
+		return ''
 
 
 class Connection(object):
@@ -49,11 +57,13 @@ class Connection(object):
 			self.close()
 			return
 
+		request_body = parse_body(request)
+
 		request_headers = RequestHeaders(request)
 		wsgi_environ = {
 			'wsgi.multiprocess': False,
 			'wsgi.url_scheme': 'http',
-			'wsgi.input': '',
+			'wsgi.input': StringIO(request_body),
 			'wsgi.multithread': True,
 			'wsgi.version': (1, 0),
 			'wsgi.run_once': False,
