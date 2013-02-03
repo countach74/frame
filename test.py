@@ -2,12 +2,19 @@
 
 from flup.server.fcgi import WSGIServer
 import frame
+import frame.postprocessors
 from frame.controller import Controller
 import threading
 
 class Root(Controller):
 	def index(self):
 		return self.get_template('root/index.html').render(session=self.session)
+
+	def get_headers(self):
+		response = []
+		for k, v in self.request.headers.items():
+			response.append("<div>%s: %s</div>" % (k, v))
+		return '\n'.join(response)
 
 	def broken(self):
 		return poo
@@ -41,9 +48,11 @@ frame.routes.connect("/", controller="root#index")
 frame.routes.connect("/broken", controller="root#broken")
 frame.routes.connect("/increase", controller="root#increase")
 frame.routes.connect("/get_visits", controller="root#get_visits")
+frame.routes.connect("/get_headers", controller="root#get_headers")
 frame.routes.resource('messages')
 
-frame.app.debug = True
+frame.app.post_processors.append(frame.postprocessors.gzip)
+frame.app.session_interface.backend = 'Memcache'
 
 frame.start_fcgi()
 #frame.start_http()

@@ -5,13 +5,11 @@ import datetime
 
 
 class Response(object):
-	def __init__(self, start_response, controller):
-		self.__start_response = start_response
-
+	def __init__(self, controller):
 		if not controller:
 			raise HTTPError404
 
-		self.__controller = controller
+		self._controller = controller
 		self.headers = DotDict({
 			'Content-Type': 'text/html',
 		})
@@ -39,7 +37,7 @@ class Response(object):
 		self.headers['Set-Cookie'] = "%s=deleted; Expires=Thu, Jan 01 1970 00:00:00 GMT" % key
 
 	def start_response(self):
-		self.__start_response(self.status, self.headers.items())
+		self._start_response(self.status, self.headers.items())
 
 	def render(self, query_string, uri_data):
 		params = parse_qs(query_string)
@@ -51,6 +49,6 @@ class Response(object):
 
 		# Must render the page before we send start_response; otherwise, controller-set
 		# headers will not get set in time.
-		result = self.__controller(**dict(params.items() + uri_data.items()))
+		result = self._controller(**dict(params.items() + uri_data.items()))
 
 		return result

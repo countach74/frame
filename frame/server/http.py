@@ -109,7 +109,7 @@ class Connection(threading.Thread):
 
 
 class HTTPServer(object):
-	def __init__(self, app, host='127.0.0.1', port=8080, listen=5, max_read=8092, auto_reload=False):
+	def __init__(self, app, host='localhost', port=8080, listen=5, max_read=8092, auto_reload=False):
 		self.app = app
 		self.host = host
 		self.port = port
