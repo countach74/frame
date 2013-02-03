@@ -8,6 +8,7 @@ from jinja2 import Environment, ChoiceLoader, PackageLoader, FileSystemLoader
 import os
 import sys
 import sessions
+import mimetypes
 
 
 class App(object):
@@ -44,8 +45,37 @@ class App(object):
 		self._template_dir = value
 		self.environment = Environment(FileSystemLoader(value))
 
+	def _get_static_content(self, uri):
+		orig_uri = uri
+
+		while uri.startswith('/'):
+			uri = uri[1:]
+
+		static_path = os.path.join(os.getcwd(), uri)
+		trash, extension = os.path.splitext(static_path)
+
+		if os.path.exists(static_path):
+			status = '200 OK'
+			try:
+				headers = {'Content-Type': mimetypes.types_map[extension]}
+			except KeyError:
+				headers = {'Content-Type': 'text/plain'}
+			response_body = open(static_path, 'r').read()
+
+		else:
+			status = '404 Not Found'
+			headers = {'Content-Type': 'text/html'}
+			response_body = self.environment.get_template('errors/404.html').render(
+				title='404 Not Found',
+				path=orig_uri)
+
+		return (status, headers, response_body)
+
 	def _dispatch(self, environ):
 		self.request = Request(environ)
+
+		if environ['REQUEST_URI'].startswith(self.static_dir):
+			return self._get_static_content(environ['REQUEST_URI'])
 
 		try:
 			match, data = routes.match(environ=environ)
@@ -72,6 +102,7 @@ class App(object):
 				response_body = e.body
 			else:
 				self.session = self.session_interface.get_session()
+				self.environment.globals['session'] = self.session
 				response_body = self.response.render(self.request.fcgi.query_string, data)
 
 				# Save the session before yielding the response
