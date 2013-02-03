@@ -1,5 +1,6 @@
-from setuptools import setup
+#!/usr/bin/python
 
+from setuptools import setup
 
 setup(
 	name="frame",
@@ -9,5 +10,5 @@ setup(
 	description="A very simple, lightweight MVC-based web framework.",
 	license="GNU",
 	keywords="web framework mvc",
-	packages=['frame']
+	packages=['frame', 'frame.server']
 )
