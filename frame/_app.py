@@ -51,28 +51,35 @@ class App(object):
 		# If TypeError or AttributeError occurs then no match was found; we should throw a 404.
 		except (TypeError, AttributeError):
 			start_response('404 Not Found', [('Content-Type', 'text/html')])
-			yield str(self.environment.get_template('errors/404.html').render(path=environ['REQUEST_URI'], title='404 Not Found'))
-			raise StopIteration
+			return str(self.environment.get_template('errors/404.html').render(path=environ['REQUEST_URI'], title='404 Not Found'))
 
-		for key, value in data.items():
-			if key in ('controller', 'action', 'method'):
-				del(data[key])
-
-		try:
-			self.response = Response(start_response, match)
-		except HTTPError, e:
-			start_response(e.status, e.headers)
-			yield e.body
+		# Otherwise, we should be good to handle the request
 		else:
-			self.session = self.session_interface.get_session()
-			rendered_response = str(self.response.render(self.request.fcgi.query_string, data))
+			for key, value in data.items():
+				if key in ('controller', 'action', 'method'):
+					del(data[key])
 
-			# Save the session before yielding the response
-			self.session_interface.save_session(self.session)
+			try:
+				self.response = Response(start_response, match)
+			except HTTPError, e:
+				raise StandardError("OH CRAP")
+				#start_response(e.status, e.headers)
+				#yield e.body
+			else:
+				self.session = self.session_interface.get_session()
+				rendered_response = str(self.response.render(self.request.fcgi.query_string, data))
 
-			yield rendered_response
+				# Save the session before yielding the response
+				self.session_interface.save_session(self.session)
+
+				self.response.start_response()
+				return rendered_response
 
 	def __call__(self, environ, start_response):
+		response = list(self.__dispatch(environ, start_response))
+		for i in response:
+			yield i
+		'''
 		if self.debug:
 			for i in self.__dispatch(environ, start_response):
 				yield i
@@ -85,6 +92,7 @@ class App(object):
 				e_type, e_value, e_tb = sys.exc_info()
 				tb = traceback.format_exception(e_type, e_value, e_tb)
 				yield str(self.environment.get_template('errors/500.html').render(title='500 Internal Server Error'))
+		'''
 
 	def start_fcgi(self):
 		from flup.server.fcgi import WSGIServer

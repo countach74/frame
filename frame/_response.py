@@ -38,6 +38,9 @@ class Response(object):
 	def delete_cookie(self, key):
 		self.headers['Set-Cookie'] = "%s=deleted; Expires=Thu, Jan 01 1970 00:00:00 GMT" % key
 
+	def start_response(self):
+		self.__start_response(self.status, self.headers.items())
+
 	def render(self, query_string, uri_data):
 		params = parse_qs(query_string)
 		
@@ -49,6 +52,5 @@ class Response(object):
 		# Must render the page before we send start_response; otherwise, controller-set
 		# headers will not get set in time.
 		result = self.__controller(**dict(params.items() + uri_data.items()))
-		self.__start_response(self.status, self.headers.items())
 
 		return result
