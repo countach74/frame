@@ -9,6 +9,10 @@ import os
 import sys
 import sessions
 import mimetypes
+import types
+
+# Import default preprocessors
+from preprocessors import form_url_encoder, form_ajax
 
 
 class App(object):
@@ -19,6 +23,7 @@ class App(object):
 		self.routes = routes
 		self.debug = debug
 
+		self.pre_processors = [form_url_encoder, form_ajax]
 		self.post_processors = []
 
 		self.config = DotDict()
@@ -73,10 +78,9 @@ class App(object):
 
 	def _dispatch(self, environ):
 		self.request = Request(environ)
-		print environ
 
-		if environ['REQUEST_URI'].startswith(self.static_dir):
-			return self._get_static_content(environ['REQUEST_URI'])
+		if environ['PATH_INFO'].startswith(self.static_dir):
+			return self._get_static_content(environ['PATH_INFO'])
 
 		try:
 			match, data = routes.match(environ=environ)
@@ -104,7 +108,11 @@ class App(object):
 			else:
 				self.session = self.session_interface.get_session()
 				self.environment.globals['session'] = self.session
-				response_body = self.response.render(self.request.fcgi.query_string, data)
+
+				for i in self.pre_processors:
+					i(self.request, self.response)
+
+				response_body = self.response.render(self.request.headers.query_string, data)
 
 				# Save the session before yielding the response
 				self.session_interface.save_session(self.session)
@@ -130,15 +138,24 @@ class App(object):
 
 				response_body = self.environment.get_template('errors/500.html').render(title='500 Internal Server Error')
 
-		for i in self.post_processors:
-			headers, response_body = i(self.request, headers, str(response_body))
+		if type(response_body) is types.GeneratorType:
+			headers['Transfer-Encoding'] = 'chunked'
+			start_response(status, headers.items())
+			for i in response_body:
+				yield "%0X\r\n%s\r\n" % (len(i), i)
+			yield "0\r\n\r\n"
 
-		response_body = str(response_body)
-		headers['Content-Length'] = str(len(response_body))
+		else:
+			# Apply post processors
+			for i in self.post_processors:
+				headers, response_body = i(self.request, headers, str(response_body))
 
-		# Deliver the goods
-		start_response(status, headers.items())
-		yield response_body
+			response_body = str(response_body)
+			headers['Content-Length'] = str(len(response_body))
+
+			# Deliver the goods
+			start_response(status, headers.items())
+			yield response_body
 
 	def start_fcgi(self, debug=False, *args, **kwargs):
 		self.debug = debug
@@ -151,6 +168,13 @@ class App(object):
 
 		from frame.server.http import HTTPServer
 		HTTPServer(self).run(*args, **kwargs)
+
+	def start_wsgi(self, host='127.0.0.1', port=8080, debug=True, *args, **kwargs):
+		self.debug = debug
+
+		from wsgiref.simple_server import make_server
+		httpd = make_server(host, port, self, *args, **kwargs)
+		httpd.serve_forever()
 
 
 app = App()

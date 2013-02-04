@@ -54,5 +54,5 @@ frame.routes.resource('messages')
 frame.app.post_processors.append(frame.postprocessors.gzip)
 frame.app.session_interface.backend = 'Memory'
 
-frame.start_fcgi()
-#frame.start_http()
+#frame.start_fcgi()
+frame.start_http()

@@ -1,6 +1,6 @@
 from _dotdict import DotDict
 from errors import HTTPError404
-from cgi import parse_qs
+from util import parse_query_string
 import datetime
 
 
@@ -14,6 +14,7 @@ class Response(object):
 			'Content-Type': 'text/html',
 		})
 		self.status = '200 OK'
+		self.additional_params = {}
 			
 	def set_cookie(self, key, value, expires=1, domain=None, path=None, secure=False, http_only=False):
 		cookie = ["%s=%s" % (key, value)]
@@ -40,15 +41,13 @@ class Response(object):
 		self._start_response(self.status, self.headers.items())
 
 	def render(self, query_string, uri_data):
-		params = parse_qs(query_string)
-		
-		# Parse the params and convert to strings wherever list contains 1 item
-		for key, value in params.items():
-			if len(value) == 1:
-				params[key] = value[0]
+		params = parse_query_string(query_string)
 
 		# Must render the page before we send start_response; otherwise, controller-set
 		# headers will not get set in time.
-		result = self._controller(**dict(params.items() + uri_data.items()))
+		result = self._controller(**dict(
+			params.items() +
+			uri_data.items() +
+			self.additional_params.items()))
 
 		return result

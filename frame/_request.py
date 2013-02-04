@@ -12,7 +12,7 @@ class Request(object):
 	def __parse(self, environ):
 		self.headers = DotDict()
 		self.wsgi = DotDict()
-		self.fcgi = DotDict()
+		#self.fcgi = DotDict()
 
 		for key, value in environ.items():
 			if key.startswith('wsgi.'):
@@ -25,7 +25,7 @@ class Request(object):
 
 			else:
 				parsed_key = key.lower()
-				self.fcgi[parsed_key] = value
+				self.headers[parsed_key] = value
 
 	def __parse_cookies(self, environ):
 		result = DotDict()
