@@ -14,8 +14,13 @@ class Controller(object):
 	__metaclass__ = _ControllerMeta
 	app = app
 
-	def get_template(self, *args, **kwargs):
-		return self.app.environment.get_template(*args, **kwargs)
+	def redirect(self, url, status='301 Moved Permanently'):
+		self.response.status = status
+		self.response.headers['Location'] = url
+
+	@property
+	def get_template(self):
+		return self.app.environment.get_template
 
 	@property
 	def response(self):
