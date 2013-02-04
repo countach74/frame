@@ -60,7 +60,7 @@ class Routes(object):
 			{
 				'uri': '/%s/{slug}',
 				'action': 'update',
-				'method': 'PUT',
+				'method': 'POST',
 			},
 			{
 				'uri': '/%s/{slug}',
