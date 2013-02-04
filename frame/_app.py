@@ -90,7 +90,7 @@ class App(object):
 			status = '404 Not Found'
 			headers = {'Content-Type': 'text/html'}
 			response_body = self.environment.get_template('errors/404.html').render(
-				path=environ['REQUEST_URI'],
+				path=environ['PATH_INFO'],
 				title='404 Not Found')
 
 		# Otherwise, we should be good to handle the request
