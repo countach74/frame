@@ -11,6 +11,9 @@ import sessions
 import mimetypes
 import types
 
+# For jinja2 toolset
+from toolset import toolset
+
 # Import default preprocessors
 from preprocessors import form_url_encoder, form_ajax
 
@@ -38,6 +41,9 @@ class App(object):
 			FileSystemLoader(template_dir),
 			PackageLoader('frame', 'templates')]))
 
+		self.toolset = toolset
+		self.toolset.app = self
+
 		# Setup session interface
 		self.session_interface = sessions.SessionInterface(self)
 
@@ -59,20 +65,26 @@ class App(object):
 		static_path = os.path.join(os.getcwd(), uri)
 		trash, extension = os.path.splitext(static_path)
 
+		def make_404():
+			status = '404 Not Found'
+			headers = {'Content-Type': 'text/html'}
+			response_body = self.environment.get_template('errors/404.html').render(
+				title='404 Not Found', path=orig_uri)
+			return (status, headers, response_body)
+
 		if os.path.exists(static_path):
 			status = '200 OK'
 			try:
 				headers = {'Content-Type': mimetypes.types_map[extension]}
 			except KeyError:
 				headers = {'Content-Type': 'text/plain'}
-			response_body = open(static_path, 'r').read()
+			try:
+				response_body = open(static_path, 'r').read()
+			except IOError:
+				return make_404()
 
 		else:
-			status = '404 Not Found'
-			headers = {'Content-Type': 'text/html'}
-			response_body = self.environment.get_template('errors/404.html').render(
-				title='404 Not Found',
-				path=orig_uri)
+			return make_404()
 
 		return (status, headers, response_body)
 
@@ -108,6 +120,7 @@ class App(object):
 			else:
 				self.session = self.session_interface.get_session()
 				self.environment.globals['session'] = self.session
+				self.environment.globals['tools'] = self.toolset
 
 				for i in self.pre_processors:
 					i(self.request, self.response)
@@ -167,7 +180,7 @@ class App(object):
 		self.debug = debug
 
 		from frame.server.http import HTTPServer
-		HTTPServer(self).run(*args, **kwargs)
+		HTTPServer(self, *args, **kwargs).run()
 
 	def start_wsgi(self, host='127.0.0.1', port=8080, debug=True, *args, **kwargs):
 		self.debug = debug

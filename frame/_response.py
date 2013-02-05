@@ -16,7 +16,7 @@ class Response(object):
 		self.status = '200 OK'
 		self.additional_params = {}
 			
-	def set_cookie(self, key, value, expires=1, domain=None, path=None, secure=False, http_only=False):
+	def set_cookie(self, key, value, expires=1, domain=None, path='/', secure=False, http_only=False):
 		cookie = ["%s=%s" % (key, value)]
 
 		if expires:

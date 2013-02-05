@@ -95,9 +95,7 @@ class SessionInterface(object):
 		try:
 			return self.backend(self.app, self)
 		except SessionLoadError:
-			key_name = self.app.config.sessions.key_name
-			self.app.response.delete_cookie(key_name)
-			return self.backend(self.app, self, True)
+			return self.backend(self.app, self, force=True)
 
 	def save_session(self, session):
 		session.save(session._key, session._data)
