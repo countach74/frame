@@ -1,10 +1,8 @@
 #!/usr/bin/python
 
-from flup.server.fcgi import WSGIServer
 import frame
-import frame.postprocessors
+from frame.postprocessors import deflate
 from frame.controller import Controller
-import threading
 
 class Root(Controller):
 	def index(self):
@@ -49,9 +47,14 @@ frame.routes.connect("/broken", controller="root#broken")
 frame.routes.connect("/increase", controller="root#increase")
 frame.routes.connect("/get_visits", controller="root#get_visits")
 frame.routes.connect("/get_headers", controller="root#get_headers")
+
+# Simple example of resource URI mapping for RESTful services
 frame.routes.resource('messages')
 
-frame.app.post_processors.append(frame.postprocessors.gzip)
+# Add 'deflate' postprocessor, which compresses all responses
+frame.app.post_processors.append(deflate)
+
+# Set the session storage backend. Currently only Memory and Memcache are available
 frame.app.session_interface.backend = 'Memory'
 
 #frame.start_fcgi()
