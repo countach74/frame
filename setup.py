@@ -11,5 +11,6 @@ setup(
 	license="GNU",
 	keywords="web framework mvc",
 	packages=['frame', 'frame.server'],
-	package_data={'frame': ['templates/*.html', 'templates/errors/*.html']}
+	package_data={'frame': ['templates/*.html', 'templates/errors/*.html']},
+	install_requires=['Jinja2']
 )
