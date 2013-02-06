@@ -1,0 +1,14 @@
+{% extends 'template.html' %}
+
+
+{% block body %}
+<h3>Users</h3>
+
+{% for user in users %}
+	<div>{{tools.link('/users/%s' % user.name, user.name)}}</div>
+{% endfor %}
+
+<p>
+{{tools.link('/users/new', 'Create new user')}}
+</p>
+{% endblock %}

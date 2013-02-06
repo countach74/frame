@@ -1,0 +1,19 @@
+{% extends 'template.html' %}
+
+{% block body %}
+
+<form method="post" action="{{tools.link('/users')}}">
+
+<div>
+User: <input type="text" name="name" />
+</div>
+
+<div>
+Email: <input type="email" name="email" />
+</div>
+
+<input type="submit" />
+
+</form>
+
+{% endblock %}
