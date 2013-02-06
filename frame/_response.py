@@ -1,5 +1,5 @@
 from _dotdict import DotDict
-from errors import HTTPError404
+from errors import Error404
 from util import parse_query_string
 import datetime
 
@@ -7,7 +7,7 @@ import datetime
 class Response(object):
 	def __init__(self, controller):
 		if not controller:
-			raise HTTPError404
+			raise Error404
 
 		self._controller = controller
 		self.headers = DotDict({

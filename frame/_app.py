@@ -2,7 +2,7 @@ from _request import Request
 from _response import Response
 from _routes import routes
 from _dotdict import DotDict
-from errors import HTTPError
+from errors import HTTPError, Error404, Error500
 import traceback
 from jinja2 import Environment, ChoiceLoader, PackageLoader, FileSystemLoader
 import os
@@ -19,7 +19,7 @@ from preprocessors import form_url_encoder, form_ajax
 
 
 class App(object):
-	def __init__(self, static_dir='/static', template_dir='templates', debug=False):
+	def __init__(self, static_dir='/static', template_dir='templates', debug=True):
 		self.static_dir = static_dir
 		self._template_dir = template_dir
 		self.path = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -65,13 +65,6 @@ class App(object):
 		static_path = os.path.join(os.getcwd(), uri)
 		trash, extension = os.path.splitext(static_path)
 
-		def make_404():
-			status = '404 Not Found'
-			headers = {'Content-Type': 'text/html'}
-			response_body = self.environment.get_template('errors/404.html').render(
-				title='404 Not Found', path=orig_uri)
-			return (status, headers, response_body)
-
 		if os.path.exists(static_path):
 			status = '200 OK'
 			try:
@@ -81,10 +74,10 @@ class App(object):
 			try:
 				response_body = open(static_path, 'r').read()
 			except IOError:
-				return make_404()
+				raise Error404
 
 		else:
-			return make_404()
+			raise Error404
 
 		return (status, headers, response_body)
 
@@ -99,11 +92,8 @@ class App(object):
 
 		# If TypeError or AttributeError occurs then no match was found; we should throw a 404.
 		except (TypeError, AttributeError):
-			status = '404 Not Found'
-			headers = {'Content-Type': 'text/html'}
-			response_body = self.environment.get_template('errors/404.html').render(
-				path=environ['PATH_INFO'],
-				title='404 Not Found')
+			raise Error404
+			
 
 		# Otherwise, we should be good to handle the request
 		else:
@@ -118,17 +108,29 @@ class App(object):
 				headers = e.headers
 				response_body = e.body
 			else:
-				self.session = self.session_interface.get_session()
+				try:
+					self.session = self.session_interface.get_session()
+				except Exception, e:
+					raise Error500
+
 				self.environment.globals['session'] = self.session
 				self.environment.globals['tools'] = self.toolset
 
 				for i in self.pre_processors:
 					i(self.request, self.response)
 
-				response_body = self.response.render(self.request.headers.query_string, data)
+				try:
+					response_body = self.response.render(self.request.headers.query_string, data)
+				except HTTPError, e:
+					raise e
+				except Exception, e:
+					raise Error500
 
 				# Save the session before yielding the response
-				self.session_interface.save_session(self.session)
+				try:
+					self.session_interface.save_session(self.session)
+				except Exception, e:
+					raise Error500
 
 				status = self.response.status
 				headers = self.response.headers
@@ -137,19 +139,13 @@ class App(object):
 
 	def __call__(self, environ, start_response):
 		# debug mode gets set to true if start_http() is used.
-		if self.debug:
+		#if self.debug:
+		#	status, headers, response_body = self._dispatch(environ)
+		#else:
+		try:
 			status, headers, response_body = self._dispatch(environ)
-		else:
-			try:
-				status, headers, response_body = self._dispatch(environ)
-			except Exception, e:
-				status = '500 Internal Server Error'
-				headers = {'Content-Type': 'text/html'}
-
-				e_type, e_value, e_tb = sys.exc_info()
-				tb = traceback.format_exception(e_type, e_value, e_tb)
-
-				response_body = self.environment.get_template('errors/500.html').render(title='500 Internal Server Error')
+		except HTTPError, e:
+			status, headers, response_body = e.render(self)
 
 		if type(response_body) is types.GeneratorType:
 			headers['Transfer-Encoding'] = 'chunked'
@@ -170,21 +166,15 @@ class App(object):
 			start_response(status, headers.items())
 			yield response_body
 
-	def start_fcgi(self, debug=False, *args, **kwargs):
-		self.debug = debug
-
+	def start_fcgi(self, *args, **kwargs):
 		from flup.server.fcgi import WSGIServer
 		WSGIServer(self).run(*args, **kwargs)
 
-	def start_http(self, debug=True, *args, **kwargs):
-		self.debug = debug
-
+	def start_http(self, *args, **kwargs):
 		from frame.server.http import HTTPServer
 		HTTPServer(self, *args, **kwargs).run()
 
-	def start_wsgi(self, host='127.0.0.1', port=8080, debug=True, *args, **kwargs):
-		self.debug = debug
-
+	def start_wsgi(self, host='127.0.0.1', port=8080, *args, **kwargs):
 		from wsgiref.simple_server import make_server
 		httpd = make_server(host, port, self, *args, **kwargs)
 		httpd.serve_forever()
