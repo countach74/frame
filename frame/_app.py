@@ -54,7 +54,9 @@ class App(object):
 	@template_dir.setter
 	def template_dir(self, value):
 		self._template_dir = value
-		self.environment = Environment(FileSystemLoader(value))
+		self.environment = Environment(loader=ChoiceLoader([
+			FileSystemLoader(value),
+			PackageLoader('frame', 'templates')]))
 
 	def _get_static_content(self, uri):
 		orig_uri = uri

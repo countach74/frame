@@ -1,4 +1,5 @@
-from frame import Controller
+import frame
+from frame.controller import Controller
 
 
 class Users(Controller):
@@ -19,7 +20,7 @@ class Users(Controller):
 		try:
 			user = self.users[slug]
 		except KeyError:
-			raise Error404("Cannot find that user")
+			raise frame.Error404("Cannot find that user")
 		else:
 			return self.get_template('users/show.html').render(user=user)
 
@@ -29,7 +30,11 @@ class Users(Controller):
 	def create(self, name, email):
 		if name not in self.users:
 			self.users[name] = {'name': name, 'email': email}
-			self.redirect('/users')
+			self.redirect('/users', True)
 
 		else:
 			return self.get_template('users/taken.html').render()
+
+	def delete(self, slug):
+		if slug in self.users:
+			del(self.users[slug])

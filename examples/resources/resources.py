@@ -11,11 +11,11 @@ from controllers import *
 frame.app.post_processors.append(deflate)
 
 
-frame.routes.connect('/', 'root#index')
+frame.routes.connect('/', 'users#index')
 
 # Apply resource URI routing to 'Users' controller
 frame.routes.resource('users')
 
 
 if __name__ == '__main__':
-	frame.start_http()
+	frame.start_fcgi()

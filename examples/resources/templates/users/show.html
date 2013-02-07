@@ -1,6 +1,6 @@
 {% extends 'template.html' %}
 
 {% block body %}
-<h3>{{user.name}}</h3>
+<h3>{{user.name}} ({{tools.link('/users/%s' % user.name, 'delete', class='delete_user')}})</h3>
 {{user.email}}
 {% endblock %}
