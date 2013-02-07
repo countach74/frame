@@ -9,17 +9,16 @@ class Root(frame.Controller):
 			self.session['name'] = name
 
 	def get(self):
-		'''
 		try:
 			return "Name: %s" % self.session['name']
 		except KeyError:
 			return "No name saved."
-		'''
-		return 'hello'
 
 
 frame.routes.connect('/', 'root#get')
 frame.routes.connect('/save/{name}', 'root#save')
+
+#frame.app.session_interface.backend = 'Memcache'
 
 
 if __name__ == '__main__':

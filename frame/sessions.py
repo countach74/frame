@@ -2,6 +2,7 @@ import pickle
 from _dotdict import DotDict
 from errors import SessionLoadError, SessionSaveError
 import datetime
+from uuid import uuid4
 
 
 class Session(object):
@@ -70,6 +71,8 @@ class Session(object):
 
 class MemorySession(Session):
 	sessions = {}
+	last_cleanup = datetime.datetime.utcnow()
+	cleanup_frequency = 30
 
 	def load(self, key):
 		try:
@@ -78,18 +81,19 @@ class MemorySession(Session):
 			raise SessionLoadError
 
 	def save(self, key, data):
-		try:
-			self.sessions[key]['data'] = data
-		except KeyError:
-			self.sessions[key] = {'data': data, 'expiration': self.get_expiration()}
-		print self.sessions
+		if data:
+			try:
+				self.sessions[key]['data'] = data
+			except KeyError:
+				self.sessions[key] = {'data': data, 'expiration': self.get_expiration()}
 
 	def cleanup_sessions(self):
 		now = datetime.datetime.utcnow()
-		for k, v in self.sessions.items():
-			if now > v['expiration']:
-				print "Deleting session %s" % k
-				del(self.sessions[k])
+		threshold = self.last_cleanup + datetime.timedelta(minutes=self.cleanup_frequency)
+		if now > threshold:
+			for k, v in self.sessions.items():
+				if now > v['expiration']:
+					del(self.sessions[k])
 
 
 class MemcacheSession(Session):
@@ -118,6 +122,9 @@ class MemcacheSession(Session):
 
 	def save(self, key, data):
 		self.db.set(self.prefix + key, pickle.dumps(data))
+
+	def cleanup_sessions(self):
+		pass
 
 
 class SessionInterface(object):
