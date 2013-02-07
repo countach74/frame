@@ -18,4 +18,4 @@ frame.routes.resource('users')
 
 
 if __name__ == '__main__':
-	frame.start_http()
+	frame.start_fcgi()
