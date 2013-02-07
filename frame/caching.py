@@ -4,6 +4,9 @@ systems here... yet.
 """
 
 
+__all__ = ['CacheOutput']
+
+
 class MemoryCacheBackend(object):
 	from hashlib import sha1
 	cache = {}
