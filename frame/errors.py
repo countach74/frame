@@ -46,6 +46,8 @@ class Error500(HTTPError):
 		e_type, e_value, e_tb = sys.exc_info()
 		if e_tb:
 			self.parameters['traceback'] = traceback.format_exception(e_type, e_value, e_tb)
+			for line in self.parameters['traceback']:
+				sys.stderr.write(line)
 		else:
 			self.parameters['traceback'] = None
 

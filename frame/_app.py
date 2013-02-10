@@ -16,6 +16,7 @@ from toolset import toolset
 
 # Import default preprocessors
 from preprocessors import form_url_encoder, form_ajax
+from partialviews import PartialViews
 
 
 class App(object):
@@ -43,6 +44,9 @@ class App(object):
 
 		self.toolset = toolset
 		self.toolset.app = self
+
+		# Setup partial views object
+		self.partial_views = PartialViews(self)
 
 		# Setup session interface
 		self.session_interface = sessions.SessionInterface(self)

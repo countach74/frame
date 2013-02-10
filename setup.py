@@ -10,7 +10,7 @@ setup(
 	description="A very simple, lightweight MVC-based web framework.",
 	license="GNU",
 	keywords="web framework mvc",
-	packages=['frame', 'frame.server'],
+	packages=['frame', 'frame.server', 'frame.orm'],
 	package_data={'frame': ['templates/*.html', 'templates/errors/*.html']},
 	install_requires=['Jinja2', 'Flup']
 )

@@ -6,8 +6,17 @@ class ToolSet(object):
 	def __getitem__(self, key):
 		return self.tools[key]
 
+	def __getattr__(self, key):
+		try:
+			return self.tools[key]
+		except KeyError, e:
+			raise AttributeError(e)
+
 	def register(self, tool):
-		tool_name = tool.__name__.lower()
+		if hasattr(tool, 'name'):
+			tool_name = tool.name
+		else:
+			tool_name = tool.__name__.lower()
 		self.tools[tool_name] = tool(self)
 
 
@@ -51,3 +60,14 @@ class Link(Tool):
 			output = '<a href="%s"%s>%s</a>' % (url, ' '.join(tags), label)
 
 		return output
+
+
+class Href(Link):
+	pass
+
+
+class GetPartialView(Tool):
+	name = 'get_partial_view'
+
+	def __call__(self, partial_view):
+		return self.app.partial_views[partial_view]

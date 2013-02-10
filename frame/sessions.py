@@ -72,6 +72,9 @@ class Session(object):
 	def cleanup_sessions(self):
 		pass
 
+	def remove(self):
+		self.expire(self._key)
+
 
 class MemorySession(Session):
 	sessions = {}
@@ -98,6 +101,10 @@ class MemorySession(Session):
 			for k, v in self.sessions.items():
 				if now > v['expiration']:
 					del(self.sessions[k])
+
+	def expire(self, key):
+		if key in self.sessions:
+			del(self.sessions[key])
 
 
 class MemcacheSession(Session):
