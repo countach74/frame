@@ -8,7 +8,7 @@ from frame.postprocessors import deflate
 from controllers import *
 
 # Apply zlib compression to responses
-frame.app.post_processors.append(deflate)
+#frame.app.post_processors.append(deflate)
 
 
 frame.routes.connect('/', 'users#index')

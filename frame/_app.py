@@ -118,6 +118,9 @@ class App(object):
 				self.environment.globals['session'] = self.session
 				self.environment.globals['tools'] = self.toolset
 
+				# Cool trick to make 'session' available everywhere easily
+				sys.modules['session'] = self.session
+
 				for i in self.pre_processors:
 					i(self.request, self.response)
 

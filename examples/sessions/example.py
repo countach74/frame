@@ -18,8 +18,6 @@ class Root(frame.Controller):
 frame.routes.connect('/', 'root#get')
 frame.routes.connect('/save/{name}', 'root#save')
 
-#frame.app.session_interface.backend = 'Memcache'
-
 
 if __name__ == '__main__':
 	frame.start_fcgi()

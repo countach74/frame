@@ -53,6 +53,7 @@ class Session(object):
 		delta = datetime.timedelta(hours=self._app.config.sessions.expires)
 		return now + delta
 
+	@classmethod
 	def make_session_key(self, length=128,
 		characters='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'):
 
@@ -67,6 +68,9 @@ class Session(object):
 			choice = choice / num_chars
 
 		return ''.join(key)
+
+	def cleanup_sessions(self):
+		pass
 
 
 class MemorySession(Session):
@@ -97,16 +101,17 @@ class MemorySession(Session):
 
 
 class MemcacheSession(Session):
+	import memcache
+	import time
 	prefix = 'FRAME_SESSION::'
 
 	def init(self):
 		import memcache
 
-		if 'servers' not in self.interface.config:
-			self.interface.config.servers = ['127.0.0.1:11211']
+		if not hasattr(self.interface, 'memcache'):
+			self.interface.memcache = self.memcache.Client(['127.0.0.1:11211'])
 
-		self.interface.config._memcache = memcache.Client(self.interface.config.servers)
-		self.db = self.interface.config._memcache
+		self.db = self.interface.memcache
 
 	def load(self, key):
 		import pickle
@@ -121,10 +126,8 @@ class MemcacheSession(Session):
 			raise SessionLoadError
 
 	def save(self, key, data):
-		self.db.set(self.prefix + key, pickle.dumps(data))
-
-	def cleanup_sessions(self):
-		pass
+		expiration = self.time.mktime(self.get_expiration().timetuple())
+		self.db.set(self.prefix + key, pickle.dumps(data), time=expiration)
 
 
 class SessionInterface(object):
