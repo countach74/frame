@@ -73,10 +73,24 @@ class CacheOutput(object):
 		return self.get_backend()[hashed_call]
 
 	def __get__(self, instance, owner=None):
+		self.controller = instance
 		return self.types.MethodType(self, instance)
 
 	def __hash(self, args, kwargs):
+		headers = self.controller.request.headers
+		server_name = headers.server_name
+		script_name = headers.script_name
+		request_uri = headers.request_uri
+
+		if script_name:
+			whole_path = "%s%s/%s" % (server_name, script_name, request_uri)
+		else:
+			whole_path = "%s/%s" % (server_name, request_uri)
+
+		return whole_path
+		'''
 		return "%s::%s::%s" % (
 			hash(self.f),
 			hash(frozenset(args)),
 			hash(frozenset(kwargs.items())))
+		'''

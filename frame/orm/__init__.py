@@ -1,4 +1,4 @@
 try:
-	import ormongo as mongo
+	from ormongo import *
 except ImportError:
 	pass

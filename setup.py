@@ -12,5 +12,5 @@ setup(
 	keywords="web framework mvc",
 	packages=['frame', 'frame.server', 'frame.orm'],
 	package_data={'frame': ['templates/*.html', 'templates/errors/*.html']},
-	install_requires=['Jinja2', 'Flup']
+	install_requires=['Jinja2', 'Flup', 'Routes', 'python-memcached']
 )

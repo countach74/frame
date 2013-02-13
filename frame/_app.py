@@ -177,7 +177,7 @@ class App(object):
 
 	def start_fcgi(self, *args, **kwargs):
 		from flup.server.fcgi import WSGIServer
-		WSGIServer(self).run(*args, **kwargs)
+		WSGIServer(self, *args, **kwargs).run()
 
 	def start_http(self, *args, **kwargs):
 		from frame.server.http import HTTPServer
