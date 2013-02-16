@@ -1,4 +1,1 @@
-try:
-	from ormongo import *
-except ImportError:
-	pass
+from ormongo import *

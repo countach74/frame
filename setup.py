@@ -11,6 +11,6 @@ setup(
 	license="GNU",
 	keywords="web framework mvc",
 	packages=['frame', 'frame.server', 'frame.orm'],
-	package_data={'frame': ['templates/*.html', 'templates/errors/*.html']},
+	package_data={'frame': ['templates/*.html', 'templates/errors/*.html', 'templates/forms/*.html', 'templates/forms/elements/*.html']},
 	install_requires=['Jinja2', 'Flup', 'Routes', 'python-memcached']
 )
