@@ -1,0 +1,5 @@
+{%- if arguments -%}
+	{%- for k, v in arguments.items() -%}
+		{{k}}="{{v}}"
+	{%- endfor -%}
+{%- endif -%}

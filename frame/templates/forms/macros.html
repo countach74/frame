@@ -1,0 +1,5 @@
+{%- macro set_default(attribute, default, value, k) -%}
+	{%- if (value and k == value) or (not value and default and k == default) -%}
+		{{attribute}}="{{attribute}}"
+	{%- endif -%}
+{%- endmacro -%}

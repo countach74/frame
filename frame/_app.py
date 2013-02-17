@@ -18,10 +18,16 @@ from toolset import toolset
 from preprocessors import form_url_encoder, form_ajax
 from partialviews import PartialViews
 
+# Needed for loading ORM drivers
+import orm
+import orm.datatypes
+import forms
+
 
 class App(object):
 	def __init__(self, static_dir='/static', template_dir='templates', debug=True):
 		self.static_dir = static_dir
+		self.static_path = os.getcwd() + static_dir
 		self._template_dir = template_dir
 		self.path = os.path.dirname(os.path.abspath(sys.argv[0]))
 		self.routes = routes
@@ -51,6 +57,12 @@ class App(object):
 		# Setup session interface
 		self.session_interface = sessions.SessionInterface(self)
 
+		# Get ORM drivers
+		forms.BasicForm._environment = self.environment
+		orm.datatypes.CustomType._environment = self.environment
+		self.orm_drivers = orm.available_drivers
+		self._orm = 'mongo'
+
 	@property
 	def template_dir(self):
 		return self._template_dir
@@ -62,16 +74,29 @@ class App(object):
 			FileSystemLoader(value),
 			PackageLoader('frame', 'templates')]))
 
+	@property
+	def orm(self):
+		return self.orm_drivers[self._orm]
+
+	@orm.setter
+	def orm(self, value):
+		orm.active_driver = value
+		self._orm = value
+
+	@property
+	def Connection(self):
+		return self.orm.Connection
+
 	def _get_static_content(self, uri):
 		orig_uri = uri
 
 		while uri.startswith('/'):
 			uri = uri[1:]
 
-		static_path = os.path.join(os.getcwd(), uri)
+		static_path = os.path.abspath(os.path.join(os.getcwd(), uri))
 		trash, extension = os.path.splitext(static_path)
 
-		if os.path.exists(static_path):
+		if os.path.exists(static_path) and static_path.startswith(self.static_path):
 			status = '200 OK'
 			try:
 				headers = {'Content-Type': mimetypes.types_map[extension]}

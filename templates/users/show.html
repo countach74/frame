@@ -1,0 +1,12 @@
+{% extends 'template.html' %}
+
+{% block main %}
+
+<h3>{{user.username}}</h3>
+{{user.email}}
+
+<p>
+{{tools.link('/users', 'Back to Users')}}
+</p>
+
+{% endblock %}

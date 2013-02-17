@@ -1,0 +1,9 @@
+{% from 'forms/macros.html' import set_default %}
+<div class="frame-form-element frame-form-select">
+	<span>{{title}}</span>
+	<select name="{{key}}">
+		{% for k, v in choices.items() %}
+		<option value="{{k}}" {{set_default('selected', default, value, k)}}>{{v}}</option>
+		{% endfor %}
+	</select>
+</div>
