@@ -1,5 +1,5 @@
 {% from 'forms/macros.html' import set_default %}
-<div class="frame-form-element frame-form-radio">
+<div class="frame-form-element frame-form-radio {%- if failed %} frame-form-fail{% endif %}">
 	<span>{{title}}</span>
 	{% for k, v in choices.items() %}
 		<input type="radio" name="{{key}}" value="{{k}}" id="{{key}}_{{k}}" {{set_default('checked', default, value, k)}} /> <label for="{{key}}_{{k}}">{{v}}</label>

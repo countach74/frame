@@ -78,11 +78,11 @@ class Model(object):
 		return str(data)
 
 	@classmethod
-	def make_new_form(self, *args, **kwargs):
-		return BasicForm(self.structure).render(*args, **kwargs)
+	def make_new_form(self, data={}, failed_items=[], *args, **kwargs):
+		return BasicForm(self.structure, data).render(failed_items=failed_items, *args, **kwargs)
 
-	def make_edit_form(self, *args, **kwargs):
-		return BasicForm(self.structure, self._data).render(*args, **kwargs)
+	def make_edit_form(self, failed_items=[], *args, **kwargs):
+		return BasicForm(self.structure, self._data).render(failed_items=failed_items, *args, **kwargs)
 
 	make_form = make_new_form
 

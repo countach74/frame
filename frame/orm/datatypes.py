@@ -15,16 +15,16 @@ class CustomType(object):
 	def check_type(self, instance, parent):
 		return isinstance(instance, parent)
 
-	def make_form_element(self, key, value=None):
+	def make_form_element(self, key, value=None, failed=False):
 		return (self._environment
 			.get_template('forms/elements/generic_element.html')
-			.render(key=key, title=key.title(), value=value, arguments=self.kwargs))
+			.render(key=key, title=key.title(), value=value, arguments=self.kwargs, failed=failed))
 
 
-def make_form_element(key, value=None):
+def make_form_element(key, value=None, failed=False):
 	return (CustomType._environment
 		.get_template('forms/elements/generic_element.html')
-		.render(key=key, title=key.title(), value=value))
+		.render(key=key, title=key.title(), value=value, failed=failed))
 
 
 class SubmitType(CustomType):
@@ -75,9 +75,10 @@ class BoolType(CustomType):
 	def __repr__(self):
 		return "<bool>"
 
-	def make_form_element(self, key, value=None):
-		return (self._environment.get_template('forms/elements/%s.html' % self.style)
-			.render(key=key, value=value, title=key.title(), choices=self.choices, default=self.default))
+	def make_form_element(self, key, value=None, failed=False):
+		return (self._environment.get_template('forms/elements/%s.html' % self.style).render(
+			key=key, value=value, title=key.title(), choices=self.choices,
+			default=self.default, failed=failed))
 
 
 class IntType(CustomType):
@@ -145,9 +146,9 @@ class EmailType(CustomType):
 	def __repr__(self):
 		return "<email>"
 
-	def make_form_element(self, key, value=None):
+	def make_form_element(self, key, value=None, failed=False):
 		return (self._environment.get_template('forms/elements/email.html')
-			.render(key=key, value=value, title=key.title()))
+			.render(key=key, value=value, title=key.title(), failed=failed))
 
 
 class ListType(CustomType):
@@ -174,6 +175,7 @@ class ListType(CustomType):
 	def __repr__(self):
 		return "<list>"
 
-	def make_form_element(self, key, value=None):
-		return (self._environment.get_template('forms/elements/%s.html' % self.style)
-			.render(key=key, value=value, title=key.title(), choices=self.choices, default=self.default))
+	def make_form_element(self, key, value=None, failed=False):
+		return (self._environment.get_template('forms/elements/%s.html' % self.style).render(
+			key=key, value=value, title=key.title(), choices=self.choices,
+			default=self.default, failed=failed))

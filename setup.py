@@ -10,7 +10,17 @@ setup(
 	description="A very simple, lightweight MVC-based web framework.",
 	license="GNU",
 	keywords="web framework mvc",
-	packages=['frame', 'frame.server', 'frame.orm'],
-	package_data={'frame': ['templates/*.html', 'templates/errors/*.html', 'templates/forms/*.html', 'templates/forms/elements/*.html']},
+	packages=['frame', 'frame.server', 'frame.orm', 'frame.orm.drivers', 'frame.orm.drivers.mongo'],
+	package_data={
+		'frame': [
+			'templates/*.html',
+			'templates/errors/*.html',
+			'templates/forms/*.html',
+			'templates/forms/elements/*.html',
+			'templates/forms/includes/*.html',
+			'static/js/*.js',
+			'static/css/*.css'
+		]
+	},
 	install_requires=['Jinja2', 'Flup', 'Routes', 'python-memcached']
 )

@@ -2,9 +2,9 @@ import sys, os
 
 
 class HTTPError(Exception):
-	def __init__(self, template=None):
+	def __init__(self, template=None, headers={'Content-Type': 'text/html'}):
 		self.template = template or 'errors/%s.html' % self.code
-		self.headers = {'Content-Type': 'text/html'}
+		self.headers = headers
 		self.parameters = {}
 
 	def render(self, app):
@@ -28,6 +28,7 @@ class HTTPError(Exception):
 		return "%s %s" % (self.code, self.message)
 
 
+# HTTP 4xx Errors
 class Error404(HTTPError):
 	def __init__(self, message="File Not Found", *args, **kwargs):
 		self.message = message
@@ -35,6 +36,19 @@ class Error404(HTTPError):
 		HTTPError.__init__(self, *args, **kwargs)
 
 
+class Error401(Error404):
+	def __init__(self, message="Not Authorized", *args, **kwargs):
+		Error404.__init__(self, message, *args, **kwargs)
+		self.code = 401
+
+
+class Error403(Error404):
+	def __init__(self, message="Forbidden", *args, **kwargs):
+		Error404.__init__(self, message, *args, **kwargs)
+		self.code = 403
+
+
+# HTTP 5xx Errors
 class Error500(HTTPError):
 	def __init__(self, message="Internal Server Error", *args, **kwargs):
 		import traceback

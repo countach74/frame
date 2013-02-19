@@ -23,11 +23,21 @@ import orm
 import orm.datatypes
 import forms
 
+# Import StaticDispatcher to retrieve static files
+from staticdispatcher import StaticDispatcher
+
+
+__frame_path = os.path.dirname(os.path.abspath(__file__))
+
+_default_static_map = {
+	'/static': 'static',
+	'/static/frame': os.path.join(__frame_path, 'static')
+}
+
 
 class App(object):
-	def __init__(self, static_dir='/static', template_dir='templates', debug=True):
-		self.static_dir = static_dir
-		self.static_path = os.getcwd() + static_dir
+	def __init__(self, template_dir='templates', debug=True, static_map=_default_static_map):
+		self.static_map = StaticDispatcher(static_map)
 		self._template_dir = template_dir
 		self.path = os.path.dirname(os.path.abspath(sys.argv[0]))
 		self.routes = routes
@@ -87,44 +97,18 @@ class App(object):
 	def Connection(self):
 		return self.orm.Connection
 
-	def _get_static_content(self, uri):
-		orig_uri = uri
-
-		while uri.startswith('/'):
-			uri = uri[1:]
-
-		static_path = os.path.abspath(os.path.join(os.getcwd(), uri))
-		trash, extension = os.path.splitext(static_path)
-
-		if os.path.exists(static_path) and static_path.startswith(self.static_path):
-			status = '200 OK'
-			try:
-				headers = {'Content-Type': mimetypes.types_map[extension]}
-			except KeyError:
-				headers = {'Content-Type': 'text/plain'}
-			try:
-				response_body = open(static_path, 'r').read()
-			except IOError:
-				raise Error404
-
-		else:
-			raise Error404
-
-		return (status, headers, response_body)
-
 	def _dispatch(self, environ):
 		self.request = Request(environ)
 
-		if environ['PATH_INFO'].startswith(self.static_dir):
-			return self._get_static_content(environ['PATH_INFO'])
+		#if environ['PATH_INFO'].startswith(self.static_dir):
+		#	return self._get_static_content(environ['PATH_INFO'])
 
 		try:
 			match, data = routes.match(environ=environ)
 
 		# If TypeError or AttributeError occurs then no match was found; we should throw a 404.
 		except (TypeError, AttributeError):
-			raise Error404
-			
+			return self.static_map.match(environ)
 
 		# Otherwise, we should be good to handle the request
 		else:
