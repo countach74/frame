@@ -31,7 +31,7 @@ __frame_path = os.path.dirname(os.path.abspath(__file__))
 
 _default_static_map = {
 	'/static': 'static',
-	'/static/frame': os.path.join(__frame_path, 'static')
+	'/frame': os.path.join(__frame_path, 'static')
 }
 
 
@@ -99,9 +99,6 @@ class App(object):
 
 	def _dispatch(self, environ):
 		self.request = Request(environ)
-
-		#if environ['PATH_INFO'].startswith(self.static_dir):
-		#	return self._get_static_content(environ['PATH_INFO'])
 
 		try:
 			match, data = routes.match(environ=environ)
