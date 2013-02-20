@@ -9,8 +9,9 @@ define(['jquery'], function($) {
 
 	form.Validator.prototype = {
 		validate: function(el) {
+			console.log(el);
 			$.each(this.structure, function(k, v) {
-				console.log(k, v);
+				
 			});
 		}
 	};

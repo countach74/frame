@@ -1,4 +1,4 @@
-from orm.datatypes import CustomType, SubmitType
+from orm.datatypes import CustomType, SubmitType, make_form_element
 
 
 class BasicForm(object):
@@ -24,7 +24,7 @@ class BasicForm(object):
 					elements.append(value.make_form_element(key, data_item, failed=failed))
 	
 				else:
-					elements.append(CustomType.make_form_element(key, data_item, failed=failed))
+					elements.append(make_form_element(key, data_item, failed=failed))
 
 		for i in buttons:
 			elements.append(i.make_form_element())

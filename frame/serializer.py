@@ -12,14 +12,12 @@ class Serializer(object):
 		else:
 			return key
 
-	def _prepare_data(self, data, prefix=[]):
-		temp = {}
-
-		for k, v in data.items():
+	def _prepare_data(self, source, destination={}, prefix=[]):
+		for k, v in source.items():
 			key = self._resolve_prefix(prefix, k)
 			if isinstance(v, CustomType):
 				data_type = v.__class__.__name__
-				temp[key] = {
+				destination[key] = {
 					'dataType': data_type,
 					'required': key in self.model.required_fields,
 					'options': v.get_options()
@@ -28,9 +26,9 @@ class Serializer(object):
 			elif isinstance(v, dict):
 				new_prefix = list(prefix)
 				new_prefix.append(k)
-				temp[key] = self._prepare_data(v, new_prefix)
+				self._prepare_data(source[k], destination, new_prefix)
 
-		return temp
+		return destination
 
 	def serialize(self):
 		return json.dumps(self._prepare_data(self.model.structure))
