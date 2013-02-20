@@ -14,13 +14,16 @@ setup(
 	package_data={
 		'frame': [
 			'templates/*.html',
+			'templates/includes/*.html',
 			'templates/errors/*.html',
 			'templates/forms/*.html',
 			'templates/forms/elements/*.html',
 			'templates/forms/includes/*.html',
+			'templates/macros/*.html',
+			'templates/js/*.js',
 			'static/js/*.js',
 			'static/css/*.css'
 		]
 	},
-	install_requires=['Jinja2', 'Flup', 'Routes', 'python-memcached']
+	install_requires=['Jinja2', 'Flup', 'Routes', 'python-memcached', 'pymongo']
 )

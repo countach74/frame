@@ -2,6 +2,7 @@ from bson import ObjectId
 from frame.orm.errors import ValidateError, RequiredFieldError, ExtraFieldError, ModelLoadError
 from frame.orm.datatypes import CustomType
 from frame.forms import BasicForm
+from frame.serializer import Serializer
 
 
 class Model(object):
@@ -208,3 +209,7 @@ class Model(object):
 	@classmethod
 	def create_index(self, *args, **kwargs):
 		return self.get_collection().create_index
+
+	@classmethod
+	def serialize(self):
+		return Serializer(self).serialize()

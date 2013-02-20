@@ -1,5 +1,5 @@
 {% from 'forms/macros.html' import set_default %}
-<div class="frame-form-element frame-form-select {%- if failed %} frame-form-fail{% endif %}">
+<div class="frame-form-item frame-form-select {%- if failed %} frame-form-fail{% endif %}">
 	<span>{{title}}</span>
 	<select name="{{key}}">
 		{% for k, v in choices.items() %}

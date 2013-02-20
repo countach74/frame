@@ -1,4 +1,4 @@
-<div class="frame-form-element {%- if failed %} frame-form-fail{% endif %}">
+<div class="frame-form-item {%- if failed %} frame-form-fail{% endif %}">
 	{% if value %}
 	<span>{{title}}</span> <input type="text" name="{{key}}" value="{{value}}" {% include 'forms/includes/arguments.html' %} />
 	{% else %}

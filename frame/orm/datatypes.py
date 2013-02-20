@@ -4,10 +4,12 @@ Defines a handful of custom types to use when defining your model's data structu
 
 from errors import *
 import types
-
+import re
 
 
 class CustomType(object):
+	template = 'forms/elements/generic_element.html'
+
 	def __init__(self, data={}, **kwargs):
 		self.kwargs = kwargs
 		self.kwargs.update(data)
@@ -17,8 +19,19 @@ class CustomType(object):
 
 	def make_form_element(self, key, value=None, failed=False):
 		return (self._environment
-			.get_template('forms/elements/generic_element.html')
+			.get_template(self.template)
 			.render(key=key, title=key.title(), value=value, arguments=self.kwargs, failed=failed))
+
+	def get_options(self):
+		options = {}
+		options.update(self.kwargs)
+
+		for i in dir(self):
+			attr = getattr(self, i)
+			if not any((hasattr(attr, '__call__'), i.startswith('_'), i in ('kwargs', 'template'))):
+				options[i] = attr
+
+		return options
 
 
 def make_form_element(key, value=None, failed=False):
@@ -60,6 +73,10 @@ class StringType(CustomType):
 
 	def __repr__(self):
 		return "<string>"
+
+
+class PasswordType(StringType):
+	template = 'forms/elements/password.html'
 
 
 class BoolType(CustomType):
@@ -125,15 +142,14 @@ class FloatType(IntType):
 
 
 class EmailType(CustomType):
-	import re
-	pattern = re.compile("^[a-zA-Z0-9\._%+\-]+@[a-zA-Z0-9_\-]+[a-zA-Z0-9_\-\.]*\.[a-zA-Z]{2,3}")
+	_pattern = re.compile("^[a-zA-Z0-9\._%+\-]+@[a-zA-Z0-9_\-]+[a-zA-Z0-9_\-\.]*\.[a-zA-Z]{2,3}")
 
 	def __init__(self, max_length=None, *args, **kwargs):
 		self.max_length = max_length
 		CustomType.__init__(self, *args, **kwargs)
 
 	def __call__(self, email):
-		match = self.re.match(self.pattern, email)
+		match = self.re.match(self._pattern, email)
 
 		if (self.max_length and len(email) > self.max_length) or not match:
 			self.raise_error(email)

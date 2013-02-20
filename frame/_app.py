@@ -31,7 +31,7 @@ __frame_path = os.path.dirname(os.path.abspath(__file__))
 
 _default_static_map = {
 	'/static': 'static',
-	'/frame': os.path.join(__frame_path, 'static')
+	'/static/frame': os.path.join(__frame_path, 'static')
 }
 
 

@@ -15,6 +15,9 @@ class StaticDispatcher(object):
 	def __setitem__(self, key, value):
 		self.static_map[key] = os.path.abspath(value)
 
+	def __repr__(self):
+		return "Static Dispatcher: %s" % self.static_map
+
 	def _resolve_map(self):
 		for i in self.static_map:
 			self.static_map[i] = os.path.abspath(self.static_map[i])
