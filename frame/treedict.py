@@ -41,7 +41,10 @@ class TreeDict(dict):
 		self._refresh()
 	
 	def __getitem__(self, key):
-		return self.data[key]
+		try:
+			return self.data[key]
+		except KeyError, e:
+			return self.original_data[key]
 		
 	def __delitem__(self, key):
 		del(self.original_data[key])

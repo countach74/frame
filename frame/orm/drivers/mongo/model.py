@@ -3,6 +3,7 @@ from frame.orm.errors import ValidateError, RequiredFieldError, ExtraFieldError,
 from frame.orm.datatypes import CustomType
 from frame.forms import BasicForm
 from frame.serializer import Serializer
+from frame.treedict import TreeDict
 
 
 class Model(object):
@@ -127,42 +128,13 @@ class Model(object):
 		self.collection.remove({'_id': self._id})
 
 	def _check_required_fields(self):
-		missing_fields = []
-		for i in self.required_fields:
-			docs = i.split('.')
-			last_item = self._data
-
-			for j in docs:
-				if j in last_item:
-					last_item = last_item[j]
-				else:
-					missing_fields.append(i)
-					break
+		td = TreeDict(self._data)
+		
+		# Record any fields that are in 'required' list, but not in data
+		missing_fields = [i for i in self.required if i not in td]
+				
 		if missing_fields:
 			raise RequiredFieldError("Required field(s) missing: %s" % ', '.join(missing_fields))
-
-	def _check_for_extra_fields(self):
-		structure = self.structure.keys()
-		data = self._data.keys()
-		extra_fields = []
-
-		for i in data:
-			if i not in structure and i != '_id':
-				extra_fields.append(i)
-
-		if extra_fields:
-			raise ExtraFieldError("Found extra field(s) in data: %s" % ', '.join(extra_fields))
-
-	def _get_structure_item(self, key_chain):
-		last_item = self.structure
-
-		for i in key_chain:
-			if i in last_item:
-				last_item = last_item[i]
-			else:
-				break
-
-		return last_item
 
 	def _check_data_types(self, data, structure, extra_fields=[]):
 		for k, v in filter(lambda (x, y): x != '_id', data.items()):
@@ -182,6 +154,7 @@ class Model(object):
 						raise ValidateError("Could not properly convert %s" % k)
 
 	def validate(self):
+		# This list gets populated by _check_data_types.
 		extra_fields = []
 
 		self._check_required_fields()
@@ -213,4 +186,15 @@ class Model(object):
 
 	@classmethod
 	def serialize(self):
-		return Serializer(self).serialize()
+		data = TreeDict(self.structure)
+		result = {}
+		
+		for key, value in data.iteritems():
+			data_type = value.__class__.__name__
+			result[key] = {
+				'dataType': data_type,
+				'required': key in self.required_fields,
+				'options': value.get_options()
+			}
+		
+		return result
