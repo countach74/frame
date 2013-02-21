@@ -2,7 +2,6 @@ from bson import ObjectId
 from frame.orm.errors import ValidateError, RequiredFieldError, ExtraFieldError, ModelLoadError
 from frame.orm.datatypes import CustomType
 from frame.forms import BasicForm
-from frame.serializer import Serializer
 from frame.treedict import TreeDict
 
 
