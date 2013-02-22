@@ -115,11 +115,9 @@ class TreeDict(dict):
 	def setdefault(self, key, default=None):
 		return self.data.setdefault(key, default)
 		
-	def update(self, data={}, **kwargs):
-		update = dict(data)
-		update.update(kwargs)
-		update = self._prepare(update)
-		return self.data.update(update)
+	def update(self, *args, **kwargs):
+		self.original_data.update(*args, **kwargs)
+		self._refresh()
 		
 	def values(self):
 		return self.data.values()

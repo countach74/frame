@@ -4,9 +4,11 @@ import stat
 from importlib import import_module
 from datatypes import *
 
+# Import global config
+from frame._config import config
+
 
 available_drivers = {}
-active_driver = 'mongo'
 
 __dirname = os.path.dirname(os.path.abspath(__file__))
 

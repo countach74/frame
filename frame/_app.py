@@ -15,7 +15,6 @@ import types
 from toolset import toolset
 
 # Import default preprocessors
-from preprocessors import form_url_encoder, form_ajax
 from partialviews import PartialViews
 
 # Needed for loading ORM drivers
@@ -25,6 +24,9 @@ import forms
 
 # Import StaticDispatcher to retrieve static files
 from staticdispatcher import StaticDispatcher
+
+# Import global config
+from _config import config
 
 
 __frame_path = os.path.dirname(os.path.abspath(__file__))
@@ -43,16 +45,6 @@ class App(object):
 		self.routes = routes
 		self.debug = debug
 
-		self.pre_processors = [form_url_encoder, form_ajax]
-		self.post_processors = []
-
-		self.config = DotDict()
-		self.config.sessions = {
-			'enabled': True,
-			'key_name': 'FrameSession',
-			'expires': 168,  #Set session expiration to 1 week by default
-		}
-
 		# Setup Jinja2 environment
 		self.environment = Environment(loader=ChoiceLoader([
 			FileSystemLoader(template_dir),
@@ -66,12 +58,15 @@ class App(object):
 
 		# Setup session interface
 		self.session_interface = sessions.SessionInterface(self)
+		
+		# Setup pre and post processor lists
+		self.pre_processors = []
+		self.post_processors = []
 
-		# Get ORM drivers
+		# Setup ORM stuff
 		forms.BasicForm._environment = self.environment
 		orm.datatypes.CustomType._environment = self.environment
 		self.orm_drivers = orm.available_drivers
-		self._orm = 'mongo'
 
 	@property
 	def template_dir(self):
@@ -86,12 +81,7 @@ class App(object):
 
 	@property
 	def orm(self):
-		return self.orm_drivers[self._orm]
-
-	@orm.setter
-	def orm(self, value):
-		orm.active_driver = value
-		self._orm = value
+		return self.orm_drivers[config['orm.driver']]
 
 	@property
 	def Connection(self):
@@ -180,17 +170,37 @@ class App(object):
 			# Deliver the goods
 			start_response(status, headers.items())
 			yield response_body
+			
+	def _prep_start(self):
+		"""
+		Populate data gathered from global config.
+		"""
+		
+		import preprocessors
+		import postprocessors
+		
+		for i in config['pre_processors']:
+			self.pre_processors.append(getattr(preprocessors, i))
+		
+		for i in config['post_processors']:
+			self.post_processors.append(getattr(postprocessors, i))
 
 	def start_fcgi(self, *args, **kwargs):
 		from flup.server.fcgi import WSGIServer
+		
+		self._prep_start()
 		WSGIServer(self, *args, **kwargs).run()
 
 	def start_http(self, *args, **kwargs):
 		from frame.server.http import HTTPServer
+		
+		self._prep_start()
 		HTTPServer(self, *args, **kwargs).run()
 
 	def start_wsgi(self, host='127.0.0.1', port=8080, *args, **kwargs):
 		from wsgiref.simple_server import make_server
+		
+		self._prep_start()
 		httpd = make_server(host, port, self, *args, **kwargs)
 		httpd.serve_forever()
 

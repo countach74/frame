@@ -43,7 +43,7 @@ class BasicForm(object):
 				if '.' in i:
 					split = i.split('.')
 					prefix = split[-2]
-					name = split[-1]
+					name = split[-1].replace("_", " ").title()
 					
 					if prefix != last_prefix:
 						if last_prefix:
@@ -54,7 +54,7 @@ class BasicForm(object):
 						
 				else:
 					last_prefix = None
-					name = i
+					name = i.replace("_", " ").title()
 						
 				failed = i in failed_items
 				item = self.structure_tree[i]
@@ -65,29 +65,29 @@ class BasicForm(object):
 					else:
 						value = None
 						
-					elements.append(item.make_form_element(name, value, failed=failed))
+					elements.append(item.make_form_element(name, i, value, failed=failed))
 					
 				else:
-					elements.append(make_form_element(name, None, failed=failed))
+					elements.append(make_form_element(name, i, None, failed=failed))
 					
 			if last_prefix:
 				elements.append(self.close_item_group())
 
 		else:
 			for key, value in self.structure_tree.iteritems():
-				if (fields and key in fields) or not fields:
-					failed = key in failed_items
-					
-					if isinstance(value, CustomType):
-						if self.data_tree and key in self.data_tree:
-							data_item = self.data_tree[key]
-						else:
-							data_item = None
-						
-						elements.append(value.make_form_element(key, data_item, failed=failed))
-						
+				title = key.replace("_", " ").title()
+				failed = key in failed_items
+				
+				if isinstance(value, CustomType):
+					if self.data_tree and key in self.data_tree:
+						data_item = self.data_tree[key]
 					else:
-						elements.append(make_form_element(key, None, failed=failed))
+						data_item = None
+					
+					elements.append(value.make_form_element(title, key, data_item, failed=failed))
+					
+				else:
+					elements.append(make_form_element(title, key, None, failed=failed))
 
 		for i in buttons:
 			elements.append(i.make_form_element())

@@ -3,6 +3,7 @@ from _dotdict import DotDict
 from errors import SessionLoadError, SessionSaveError
 import datetime
 from uuid import uuid4
+from _config import config
 
 
 class Session(object):
@@ -16,8 +17,8 @@ class Session(object):
 		self.modified = False
 		
 		# Create session cookie if it does not already exist
-		key_name = app.config.sessions.key_name
-		expires = app.config.sessions.expires
+		key_name = config['sessions.cookie_name']
+		expires = config['sessions.expires']
 
 		self.init()
 
@@ -50,7 +51,7 @@ class Session(object):
 
 	def get_expiration(self):
 		now = datetime.datetime.utcnow()
-		delta = datetime.timedelta(hours=self._app.config.sessions.expires)
+		delta = datetime.timedelta(hours=config['sessions.expires'])
 		return now + delta
 
 	@classmethod
@@ -79,7 +80,6 @@ class Session(object):
 class MemorySession(Session):
 	sessions = {}
 	last_cleanup = datetime.datetime.utcnow()
-	cleanup_frequency = 30
 
 	def load(self, key):
 		try:
@@ -88,15 +88,14 @@ class MemorySession(Session):
 			raise SessionLoadError
 
 	def save(self, key, data):
-		if data:
-			try:
-				self.sessions[key]['data'] = data
-			except KeyError:
-				self.sessions[key] = {'data': data, 'expiration': self.get_expiration()}
+		try:
+			self.sessions[key]['data'] = data
+		except KeyError:
+			self.sessions[key] = {'data': data, 'expiration': self.get_expiration()}
 
 	def cleanup_sessions(self):
 		now = datetime.datetime.utcnow()
-		threshold = self.last_cleanup + datetime.timedelta(minutes=self.cleanup_frequency)
+		threshold = self.last_cleanup + datetime.timedelta(minutes=config['sessions.memory.cleanup_frequency'])
 		if now > threshold:
 			for k, v in self.sessions.items():
 				if now > v['expiration']:
@@ -138,18 +137,12 @@ class MemcacheSession(Session):
 
 
 class SessionInterface(object):
-	def __init__(self, app, backend='Memory', **kwargs):
+	def __init__(self, app, **kwargs):
 		self.app = app
-		self._backend = globals()[backend + 'Session']
-		self.config = DotDict(kwargs)
 
 	@property
 	def backend(self):
-		return self._backend
-
-	@backend.setter
-	def backend(self, value):
-		self._backend = globals()[value + 'Session']
+		return globals()[config['sessions.backend'] + 'Session']
 
 	def get_session(self):
 		try:

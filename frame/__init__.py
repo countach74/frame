@@ -1,5 +1,6 @@
 from _app import app
 from _routes import routes
+from _config import config
 from controller import Controller
 from errors import Error404, Error500
 

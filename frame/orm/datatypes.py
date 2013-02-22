@@ -17,10 +17,10 @@ class CustomType(object):
 	def check_type(self, instance, parent):
 		return isinstance(instance, parent)
 
-	def make_form_element(self, key, value=None, failed=False):
+	def make_form_element(self, title, key, value=None, failed=False):
 		return (self._environment
 			.get_template(self.template)
-			.render(key=key, title=key.title(), value=value, arguments=self.kwargs, failed=failed))
+			.render(key=key, title=title, value=value, arguments=self.kwargs, failed=failed))
 
 	def get_options(self):
 		options = {}
@@ -34,10 +34,10 @@ class CustomType(object):
 		return options
 
 
-def make_form_element(key, value=None, failed=False):
+def make_form_element(title, key, value=None, failed=False):
 	return (CustomType._environment
 		.get_template('forms/elements/generic_element.html')
-		.render(key=key, title=key.title(), value=value, failed=failed))
+		.render(key=key, title=title, value=value, failed=failed))
 
 
 class SubmitType(CustomType):
