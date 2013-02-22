@@ -114,7 +114,7 @@ class App(object):
 					del(data[key])
 
 			try:
-				self.response = Response(match)
+				self.response = Response(self, match)
 			except HTTPError, e:
 				status = e.status
 				headers = e.headers

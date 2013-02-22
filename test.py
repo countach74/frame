@@ -10,22 +10,22 @@ from models import *
 
 class Root(frame.Controller):
 	def index(self):
-		return "Hi. It might work"
+		pass
 
 
 class Users(frame.Controller):
 	def index(self):
 		users = User.find()
-		return self.get_template('users/index.html').render(users=users)
+		return {'users': users}
 
 	def show(self, slug):
 		user = User.find_one({'username': slug})
 		if user:
-			return self.get_template('users/show.html').render(user=user)
+			return {'user': user}
 
 	def new(self):
 		submit_button = SubmitType("Submit", {'class': 'stuff'})
-		return self.get_template('users/new.html').render(model=User, buttons=[submit_button])
+		return {'model': User, 'buttons': [submit_button]}
 
 	def create(self, **data):
 		user = User(data)
@@ -33,8 +33,17 @@ class Users(frame.Controller):
 		self.redirect('/users')
 
 
+class Friends(frame.Controller):
+	def index(self, user):
+		return "Friends list here for friend: %s" % user
+
+	def show(self, user, slug):
+		return {} #"Show friend %s for user %s" % (slug, user)
+
+
 frame.routes.connect('/', 'root#index')
 frame.routes.resource('users')
+frame.routes.resource('friends', '/users/{user}/friends')
 
 
 if __name__ == '__main__':

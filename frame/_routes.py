@@ -1,3 +1,4 @@
+import re
 from routes import Mapper
 from uuid import uuid4
 
@@ -6,6 +7,7 @@ class Routes(object):
 	def __init__(self):
 		self.mapper = Mapper()
 		self.controllers = {}
+		self.resources = {}
 
 	def register_controller(self, controller):
 		self.controllers[controller.__class__.__name__.lower()] = controller()
@@ -30,60 +32,67 @@ class Routes(object):
 
 		self.mapper.connect(name, path, controller=controller, action=action, *args, **kwargs)
 		
-	def resource(self, controller):
+	def parse_mount_point(self, mount_point):
+		regex = re.compile("(/{.*?})")
+		return re.sub(regex, '', mount_point)
+		
+	def resource(self, controller, mount_point=None):
+		if not mount_point:
+			mount_point = '/%s' % controller
+		
 		uri_map = [
 			{
-				'uri': '/%s.{content_type}',
+				'uri': '%s.{content_type}',
 				'action': 'index',
 				'method': 'GET',
 			},
 			{
-				'uri': '/%s',
+				'uri': '%s',
 				'action': 'index',
 				'method': 'GET',
 			},
 			{
-                                'uri': '/%s',
-                                'action': 'create',
+				'uri': '%s',
+				'action': 'create',
 				'method': 'POST',
 			},
 			{
-				'uri': '/%s/new.{content_type}',
+				'uri': '%s/new.{content_type}',
 				'action': 'new',
 				'method': 'GET'
 			},
 			{
-				'uri': '/%s/new',
+				'uri': '%s/new',
 				'action': 'new',
 				'method': 'GET',
 			},
 			{
-				'uri': '/%s/{slug}',
+				'uri': '%s/{slug}',
 				'action': 'update',
 				'method': 'POST',
 			},
 			{
-				'uri': '/%s/{slug}',
+				'uri': '%s/{slug}',
 				'action': 'delete',
 				'method': 'DELETE',
 			},
 			{
-				'uri': '/%s/{slug}.{content_type}',
+				'uri': '%s/{slug}.{content_type}',
 				'action': 'show',
 				'method': 'GET',
 			},
 			{
-				'uri': '/%s/{slug}',
+				'uri': '%s/{slug}',
 				'action': 'show',
 				'method': 'GET',
 			},
 			{
-				'uri': '/%s/{slug}.{content_type}/edit',
+				'uri': '%s/{slug}.{content_type}/edit',
 				'action': 'edit',
 				'method': 'GET',
 			},
 			{
-				'uri': '/%s/{slug}/edit',
+				'uri': '%s/{slug}/edit',
 				'action': 'edit',
 				'method': 'GET',
 			},
@@ -91,8 +100,10 @@ class Routes(object):
 
 		for i in uri_map:
 			self.connect(
-				path=i['uri'] % controller,
+				path=i['uri'] % mount_point,
 				controller='%s#%s' % (controller, i['action']),
 				conditions={'method': i['method']})
+				
+		self.resources[self.controllers[controller].__class__] = self.parse_mount_point(mount_point)
 
 routes = Routes()

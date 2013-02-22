@@ -1,4 +1,5 @@
 import sys, os
+from cgi import escape
 
 
 class HTTPError(Exception):
@@ -59,8 +60,9 @@ class Error500(HTTPError):
 
 		e_type, e_value, e_tb = sys.exc_info()
 		if e_tb:
-			self.parameters['traceback'] = traceback.format_exception(e_type, e_value, e_tb)
-			for line in self.parameters['traceback']:
+			tb = traceback.format_exception(e_type, e_value, e_tb)
+			self.parameters['traceback'] = map(escape, tb)
+			for line in tb:
 				sys.stderr.write(line)
 		else:
 			self.parameters['traceback'] = None

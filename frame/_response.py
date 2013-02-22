@@ -2,14 +2,16 @@ from _dotdict import DotDict
 from errors import Error404
 from util import parse_query_string
 import datetime
+from _routes import routes
 
 
 class Response(object):
-	def __init__(self, controller):
+	def __init__(self, app, controller):
 		if not controller:
 			raise Error404
 
-		self._controller = controller
+		self.app = app
+		self.controller = controller
 		self.headers = DotDict({
 			'Content-Type': 'text/html',
 		})
@@ -45,9 +47,21 @@ class Response(object):
 
 		# Must render the page before we send start_response; otherwise, controller-set
 		# headers will not get set in time.
-		result = self._controller(**dict(
+		result = self.controller(**dict(
 			params.items() +
 			uri_data.items() +
 			self.additional_params.items()))
+			
+		if isinstance(result, dict) or result is None:
+			controller_object = self.controller.im_class()
+			mount_point = routes.resources[controller_object.__class__]
+			
+			# Strip any leading slashes from mount_point
+			while mount_point[0] == '/':
+				mount_point = mount_point[1:]
+				
+			mount_point = '%s/%s.html' % (mount_point, self.controller.__name__)
+				
+			result = self.app.environment.get_template(mount_point).render(result)
 
 		return result

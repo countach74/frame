@@ -80,7 +80,6 @@ class Model(object):
 
 	@classmethod
 	def make_new_form(self, action, data={}, failed_items=[], *args, **kwargs):
-		print data, failed_items
 		return BasicForm(self, data).render(action=action, failed_items=failed_items, *args, **kwargs)
 
 	def make_edit_form(self, action, failed_items=[], *args, **kwargs):
