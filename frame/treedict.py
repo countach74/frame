@@ -3,9 +3,9 @@ class TreeDict(dict):
 	An adapter to facilitate matching up validation for models and what not.
 	"""
 	
-	def __init__(self, data={}):
+	def __init__(self, data=None):
 		#self.data = self._prepare(data)
-		self.original_data = data
+		self.original_data = data if data is not None else {}
 		self._refresh()
 		
 	def _resolve_prefix(self, prefix, key):
@@ -118,6 +118,10 @@ class TreeDict(dict):
 	def update(self, *args, **kwargs):
 		self.original_data.update(*args, **kwargs)
 		self._refresh()
+		
+	def update_tree(self, data):
+		for k, v in data.items():
+			self[k] = v
 		
 	def values(self):
 		return self.data.values()

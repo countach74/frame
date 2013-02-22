@@ -13,7 +13,6 @@ class Model(object):
 	hidden_fields = []
 
 	def __init__(self, data={}, **kwargs):
-		# Weird work around for some sort of pointer issue?
 		data = dict(data)
 
 		if '_id' not in data and '_id' not in kwargs:
@@ -24,10 +23,13 @@ class Model(object):
 		self._setup_defaults(defaults)
 
 		# Check if any of the defaults are callables; call and return values if they are
-		self._data = defaults
-		self._data.update(data)
-		self._data.update(kwargs)
-
+		self._data = {}
+		self._tree_data = TreeDict(self._data)
+		
+		self._tree_data.update_tree(defaults)
+		self._tree_data.update_tree(data)
+		self._tree_data.update_tree(dict(kwargs))
+		
 		# Change "make_form" method to point to "make_edit_form"
 		self.make_form = self.make_edit_form
 
@@ -54,7 +56,7 @@ class Model(object):
 		elif key in self.structure:
 			return None
 		else:
-			raise AttributeError(e)
+			raise AttributeError
 
 	def __delattr__(self, key):
 		try:
@@ -63,7 +65,7 @@ class Model(object):
 			raise AttributeError(e)
 
 	def __setattr__(self, key, value):
-		if key in ('_data', 'make_form'):
+		if key in ('_data', 'make_form', '_tree_data'):
 			object.__setattr__(self, key, value)
 		elif key in self.structure:
 			self._data[key] = value
@@ -126,39 +128,35 @@ class Model(object):
 		self.collection.remove({'_id': self._id})
 
 	def _check_required_fields(self):
-		td = TreeDict(self._data)
-		
 		# Record any fields that are in 'required' list, but not in data
-		missing_fields = [i for i in self.required if i not in td]
+		missing_fields = [i for i in self.required_fields if i not in self._tree_data]
 				
 		if missing_fields:
 			raise RequiredFieldError("Required field(s) missing: %s" % ', '.join(missing_fields))
 
-	def _check_data_types(self, data, structure, extra_fields=[]):
-		for k, v in filter(lambda (x, y): x != '_id', data.items()):
-			if isinstance(v, dict):
-				self._check_data_types(data[k], structure[k], extra_fields)
-			else:
-				if k in structure and isinstance(structure[k], CustomType):
+	def _check_data_types(self, data, structure):
+		"""
+		Checks to see if everything is all right with data types and what not. Also returns
+		a list of fields that don't belong, if any.
+		"""
+		
+		extra_fields = []
+		structure = TreeDict(structure)
+		
+		for k, v in data.items():
+			if k not in ('_id',):
+				if k in structure:
 					data[k] = structure[k](v)
 				elif k not in structure:
 					extra_fields.append(k)
-				elif not isinstance(v, structure[k]):
-					try:
-						data[k] = structure[k](v)
-					except KeyError:
-						extra_fields.append(k)
-					except Exception, e:
-						raise ValidateError("Could not properly convert %s" % k)
+		
+		return extra_fields
 
 	def validate(self):
-		# This list gets populated by _check_data_types.
-		extra_fields = []
-
 		self._check_required_fields()
-		self._check_data_types(self._data, self.structure, extra_fields)
-		if extra_fields:
-			raise ExtraFieldError("Found extra field(s) in data: %s" % ', '.join(extra_fields))
+		extra_fields = self._check_data_types(self._tree_data, self.structure)
+		#if extra_fields:
+		#	raise ExtraFieldError("Found extra field(s) in data: %s" % ', '.join(extra_fields))
 			
 	@classmethod
 	def find(self, *args, **kwargs):

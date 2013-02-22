@@ -149,7 +149,7 @@ class EmailType(CustomType):
 		CustomType.__init__(self, *args, **kwargs)
 
 	def __call__(self, email):
-		match = self.re.match(self._pattern, email)
+		match = re.match(self._pattern, email)
 
 		if (self.max_length and len(email) > self.max_length) or not match:
 			self.raise_error(email)

@@ -6,8 +6,7 @@
 <script type="text/javascript">
 	require(['frame/form'], function(form) {
 		var validator = new form.Validator({{validation_structure}});
-		
-		console.log(validator);
+		//validator.validate($("#{{id}}"));
 	});
 </script>
 {% endif -%}

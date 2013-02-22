@@ -9,10 +9,34 @@ define(['jquery'], function($) {
 
 	form.Validator.prototype = {
 		validate: function(el) {
-			console.log(el);
-			$.each(this.structure, function(k, v) {
+			var validator = this;
+			
+			el.submit(function(e) {
+				e.preventDefault();
+				
+				var passwordVerifyFields = [];
+				
+				$.each(el.find(".frame-form-password-verify input"), function() {
+					passwordVerifyFields.push($(this).attr('name'));
+				});
+				
+				var formData = validator.serialize($(this));
+				
+				$.each(passwordVerifyFields, function(k, v) {
+					delete(formData[v]);
+				});
 				
 			});
+		},
+		
+		serialize: function(el) {
+			var result = {};
+			
+			$.each(el.serializeArray(), function(k, v) {
+				result[v.name] = v.value;
+			});
+			
+			return result;
 		}
 	};
 

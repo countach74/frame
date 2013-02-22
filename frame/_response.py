@@ -61,6 +61,9 @@ class Response(object):
 				mount_point = mount_point[1:]
 				
 			mount_point = '%s/%s.html' % (mount_point, self.controller.__name__)
+			
+			if result is None:
+				result = {}
 				
 			result = self.app.environment.get_template(mount_point).render(result)
 
