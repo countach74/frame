@@ -68,7 +68,7 @@ class BasicForm(object):
 					elements.append(item.make_form_element(name, i, value, failed=failed))
 					
 				else:
-					elements.append(make_form_element(name, i, None, failed=failed))
+					elements.append(make_form_element(name, i, failed=failed))
 					
 			if last_prefix:
 				elements.append(self.close_item_group())

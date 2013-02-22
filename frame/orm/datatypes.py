@@ -92,7 +92,7 @@ class BoolType(CustomType):
 	def __repr__(self):
 		return "<bool>"
 
-	def make_form_element(self, key, value=None, failed=False):
+	def make_form_element(self, title, key, value=None, failed=False):
 		return (self._environment.get_template('forms/elements/%s.html' % self.style).render(
 			key=key, value=value, title=key.title(), choices=self.choices,
 			default=self.default, failed=failed))
@@ -162,7 +162,7 @@ class EmailType(CustomType):
 	def __repr__(self):
 		return "<email>"
 
-	def make_form_element(self, key, value=None, failed=False):
+	def make_form_element(self, title, key, value=None, failed=False):
 		return (self._environment.get_template('forms/elements/email.html')
 			.render(key=key, value=value, title=key.title(), failed=failed))
 
@@ -191,7 +191,7 @@ class ListType(CustomType):
 	def __repr__(self):
 		return "<list>"
 
-	def make_form_element(self, key, value=None, failed=False):
+	def make_form_element(self, title, key, value=None, failed=False):
 		return (self._environment.get_template('forms/elements/%s.html' % self.style).render(
 			key=key, value=value, title=key.title(), choices=self.choices,
 			default=self.default, failed=failed))
