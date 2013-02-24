@@ -25,5 +25,5 @@ setup(
 			'static/css/*.css'
 		]
 	},
-	install_requires=['Jinja2', 'Flup', 'Routes', 'python-memcached', 'pymongo']
+	install_requires=['Jinja2', 'Flup', 'Routes', 'python-memcached', 'pymongo', 'pytz']
 )

@@ -1,4 +1,5 @@
 from treedict import TreeDict
+import sys
 
 # Setup default config
 config = TreeDict({
@@ -21,6 +22,28 @@ config = TreeDict({
 		'driver': 'mongo'
 	},
 	
+	'application': {
+		'name': 'FrameApp'
+	},
+	
 	'pre_processors': ['form_url_encoder', 'form_ajax'],
-	'post_processors': []
+	'post_processors': [],
+	'timezone': 'America/Los_Angeles',
+	'logger': {
+		'driver': 'stdout',
+		'production': {
+			'options': {
+				'facility': 'user'
+			}
+		},
+		'stdout': {
+			'options': {
+				'out': sys.stdout,
+				'err': sys.stderr
+			}
+		},
+		'null': {
+			'options': {}
+		}
+	}
 })

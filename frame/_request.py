@@ -4,7 +4,7 @@ from _routes import routes
 
 class Request(object):
 	def __init__(self, environ):
-		self.__environ = environ
+		self.environ = environ
 		self.__parse(environ)
 		self.__body = None
 		self.cookies = self.__parse_cookies(environ)

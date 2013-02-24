@@ -28,6 +28,9 @@ from staticdispatcher import StaticDispatcher
 # Import global config
 from _config import config
 
+# Import logger
+from _logger import logger
+
 
 __frame_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -170,6 +173,7 @@ class App(object):
 			# Deliver the goods
 			start_response(status, headers.items())
 			yield response_body
+			logger.log_request(self.request, status, headers, response_body)
 			
 	def _prep_start(self):
 		"""
@@ -189,12 +193,14 @@ class App(object):
 		from flup.server.fcgi import WSGIServer
 		
 		self._prep_start()
+		logger.log_info("Starting FLUP WSGI Server...")
 		WSGIServer(self, *args, **kwargs).run()
 
 	def start_http(self, *args, **kwargs):
 		from frame.server.http import HTTPServer
 		
 		self._prep_start()
+		logger.log_info("Starting Frame HTTP Server...")
 		HTTPServer(self, *args, **kwargs).run()
 
 	def start_wsgi(self, host='127.0.0.1', port=8080, *args, **kwargs):
@@ -202,6 +208,7 @@ class App(object):
 		
 		self._prep_start()
 		httpd = make_server(host, port, self, *args, **kwargs)
+		logger.log_info("Starting Python WSGI Server...")
 		httpd.serve_forever()
 
 
