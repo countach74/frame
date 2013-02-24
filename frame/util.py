@@ -4,6 +4,9 @@ are used internally by Frame; some are designed to be used by web developers.
 """
 
 
+import re
+
+
 def parse_query_string(string):
 	from cgi import parse_qs
 
@@ -39,3 +42,15 @@ def import_all_modules(origin_file):
 
 	# Chdir back to original directory
 	os.chdir(old_path)
+	
+	
+def make_resource(controller, path):
+	template_dir = re.sub("(/{.*?})", '', path)
+	
+	while template_dir.startswith('/'):
+		template_dir = template_dir[1:]
+	
+	controller.__resource__ = {
+		'base_uri': path,
+		'template_dir': template_dir
+	}

@@ -1,6 +1,7 @@
 import re
 from routes import Mapper
 from uuid import uuid4
+from util import make_resource
 
 
 class Routes(object):
@@ -104,6 +105,8 @@ class Routes(object):
 				controller='%s#%s' % (controller, i['action']),
 				conditions={'method': i['method']})
 				
-		self.resources[self.controllers[controller].__class__] = self.parse_mount_point(mount_point)
+		make_resource(self.controllers[controller], mount_point)
+				
+		#self.resources[self.controllers[controller].__class__] = self.parse_mount_point(mount_point)
 
 routes = Routes()

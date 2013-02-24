@@ -27,6 +27,34 @@ class HTTPError(Exception):
 	@property
 	def status(self):
 		return "%s %s" % (self.code, self.message)
+		
+
+# HTTP 3xx Errors
+class Error301(HTTPError):
+	def __init__(self, url, message='301 Moved Permanently', *args, **kwargs):
+		self.url = url
+		self.message = message
+		self.code = 301
+		HTTPError.__init__(self, *args, **kwargs)
+		
+		self.headers = {
+			'Location': self.url
+		}
+		
+	def render(self, app):
+		self.app = app
+		return (
+			self.status,
+			self.headers,
+			None)
+			
+			
+class Error302(Error301):
+	pass
+
+
+class Error303(Error301):
+	pass
 
 
 # HTTP 4xx Errors

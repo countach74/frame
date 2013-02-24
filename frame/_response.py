@@ -3,6 +3,7 @@ from errors import Error404
 from util import parse_query_string
 import datetime
 from _routes import routes
+import os
 
 
 class Response(object):
@@ -52,23 +53,14 @@ class Response(object):
 			uri_data.items() +
 			self.additional_params.items()))
 			
-		if isinstance(result, dict) or result is None:
-			controller_object = self.controller.im_self.__class__
+		if hasattr(self.controller.im_self, '__resource__') and (
+			result is None or isinstance(result, dict)):
 			
-			try:
-				mount_point = routes.resources[controller_object]
-			except KeyError:
-				return result
+			method_name = self.controller.__name__
+			template_dir = self.controller.im_self.__resource__['template_dir']
+			template_path = os.path.join(template_dir, method_name + '.html')
 			
-			# Strip any leading slashes from mount_point
-			while mount_point[0] == '/':
-				mount_point = mount_point[1:]
-				
-			mount_point = '%s/%s.html' % (mount_point, self.controller.__name__)
-			
-			if result is None:
-				result = {}
-				
-			result = self.app.environment.get_template(mount_point).render(result)
+			result = self.controller.im_self.get_template(template_path).render(
+				result if result else {})
 
 		return result
