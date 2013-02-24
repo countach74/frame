@@ -20,7 +20,7 @@ class BasicForm(object):
 		return self._environment.get_template('forms/close_item_group.html').render()
 
 	def render(self, action, fields=None, failed_items=[], buttons=[SubmitType()],
-		method='post', disable_validation=False, **kwargs):
+		method='post', disable_validation=False, new=False, **kwargs):
 			
 		"""
 		Generates HTML forms and, eventually, JavaScript validation to go along with
@@ -61,14 +61,14 @@ class BasicForm(object):
 				
 				if isinstance(item, CustomType):
 					if self.data_tree and i in self.data_tree:
-						value = self.data_tree[key]
+						value = self.data_tree[i]
 					else:
 						value = None
 						
-					elements.append(item.make_form_element(name, i, value, failed=failed))
+					elements.append(item.make_form_element(name, i, value, new=new, failed=failed))
 					
 				else:
-					elements.append(make_form_element(name, i, failed=failed))
+					elements.append(make_form_element(name, i, new=new, failed=failed))
 					
 			if last_prefix:
 				elements.append(self.close_item_group())

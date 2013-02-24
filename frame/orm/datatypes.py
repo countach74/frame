@@ -17,10 +17,10 @@ class CustomType(object):
 	def check_type(self, instance, parent):
 		return isinstance(instance, parent)
 
-	def make_form_element(self, title, key, value=None, failed=False):
+	def make_form_element(self, title, key, value=None, new=False, failed=False):
 		return (self._environment
 			.get_template(self.template)
-			.render(key=key, title=title, value=value, arguments=self.kwargs, failed=failed))
+			.render(key=key, title=title, value=value, arguments=self.kwargs, new=new, failed=failed))
 
 	def get_options(self):
 		options = {}
@@ -34,10 +34,10 @@ class CustomType(object):
 		return options
 
 
-def make_form_element(title, key, value=None, failed=False):
+def make_form_element(title, key, value=None, new=False, failed=False):
 	return (CustomType._environment
 		.get_template('forms/elements/generic_element.html')
-		.render(key=key, title=title, value=value, failed=failed))
+		.render(key=key, title=title, value=value, new=new, failed=failed))
 
 
 class SubmitType(CustomType):
@@ -92,10 +92,10 @@ class BoolType(CustomType):
 	def __repr__(self):
 		return "<bool>"
 
-	def make_form_element(self, title, key, value=None, failed=False):
+	def make_form_element(self, title, key, new=False, value=None, failed=False):
 		return (self._environment.get_template('forms/elements/%s.html' % self.style).render(
 			key=key, value=value, title=key.title(), choices=self.choices,
-			default=self.default, failed=failed))
+			default=self.default, new=new, failed=failed))
 
 
 class IntType(CustomType):
@@ -162,9 +162,9 @@ class EmailType(CustomType):
 	def __repr__(self):
 		return "<email>"
 
-	def make_form_element(self, title, key, value=None, failed=False):
+	def make_form_element(self, title, key, value=None, new=False, failed=False):
 		return (self._environment.get_template('forms/elements/email.html')
-			.render(key=key, value=value, title=key.title(), failed=failed))
+			.render(key=key, value=value, title=key.title(), new=new, failed=failed))
 
 
 class ListType(CustomType):
@@ -191,7 +191,7 @@ class ListType(CustomType):
 	def __repr__(self):
 		return "<list>"
 
-	def make_form_element(self, title, key, value=None, failed=False):
+	def make_form_element(self, title, key, value=None, new=False, failed=False):
 		return (self._environment.get_template('forms/elements/%s.html' % self.style).render(
 			key=key, value=value, title=key.title(), choices=self.choices,
-			default=self.default, failed=failed))
+			default=self.default, new=new, failed=failed))

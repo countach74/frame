@@ -53,8 +53,12 @@ class Response(object):
 			self.additional_params.items()))
 			
 		if isinstance(result, dict) or result is None:
-			controller_object = self.controller.im_class()
-			mount_point = routes.resources[controller_object.__class__]
+			controller_object = self.controller.im_self.__class__
+			
+			try:
+				mount_point = routes.resources[controller_object]
+			except KeyError:
+				return result
 			
 			# Strip any leading slashes from mount_point
 			while mount_point[0] == '/':

@@ -32,6 +32,12 @@ class Model(object):
 		
 		# Change "make_form" method to point to "make_edit_form"
 		self.make_form = self.make_edit_form
+		
+	def __getstate__(self):
+		copied_dict = self.__dict__.copy()
+		if 'make_form' in copied_dict:
+			del(copied_dict['make_form'])
+		return copied_dict
 
 	def __getitem__(self, key):
 		if key in self._data:
@@ -51,6 +57,8 @@ class Model(object):
 		del(self._data[key])
 
 	def __getattr__(self, key):
+		if key == '__setstate__':
+			return object.__getattr__(self, key)
 		if key in self._data:
 			return self._data[key]
 		elif key in self.structure:
@@ -65,7 +73,7 @@ class Model(object):
 			raise AttributeError(e)
 
 	def __setattr__(self, key, value):
-		if key in ('_data', 'make_form', '_tree_data'):
+		if key in ('_data', 'make_form', '_tree_data') or key.endswith('__'):
 			object.__setattr__(self, key, value)
 		elif key in self.structure:
 			self._data[key] = value
@@ -82,18 +90,21 @@ class Model(object):
 
 	@classmethod
 	def make_new_form(self, action, data={}, failed_items=[], *args, **kwargs):
-		return BasicForm(self, data).render(action=action, failed_items=failed_items, *args, **kwargs)
+		return BasicForm(self, data).render(action=action, new=True, failed_items=failed_items, *args, **kwargs)
 
 	def make_edit_form(self, action, failed_items=[], *args, **kwargs):
-		return BasicForm(self, self._data).render(action=action, failed_items=failed_items, *args, **kwargs)
+		return BasicForm(self, self._data).render(action=action, new=False, failed_items=failed_items, *args, **kwargs)
 
 	make_form = make_new_form
 
 	def items(self):
 		return self._data.items()
 
-	def update(self, data):
-		self._data.update(data)
+	def update(self, data, tree=True):
+		if tree:
+			self._tree_data.update_tree(data)
+		else:
+			self._tree_data.update(data)
 
 	def _setup_defaults(self, data):
 		if isinstance(data, dict):
@@ -149,12 +160,17 @@ class Model(object):
 					data[k] = structure[k](v)
 				elif k not in structure:
 					extra_fields.append(k)
+					del(data[k])
 		
 		return extra_fields
+		
+	def prep_data(self, data):
+		pass
 
 	def validate(self):
 		self._check_required_fields()
 		extra_fields = self._check_data_types(self._tree_data, self.structure)
+		self.prep_data(self._data)
 		#if extra_fields:
 		#	raise ExtraFieldError("Found extra field(s) in data: %s" % ', '.join(extra_fields))
 			
