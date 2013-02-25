@@ -38,7 +38,16 @@ class Connection(object):
 		pass
 
 	def handle_read(self):
-		request = self.socket.recv(self.server.max_read)
+		try:
+			request = self.socket.recv(self.server.max_read)
+		except socket.error:
+			self.close()
+			return
+		
+		if not request:
+			self.close()
+			return
+		
 		self.handle_request(request)
 
 	def handle_write(self):
@@ -46,10 +55,9 @@ class Connection(object):
 		try:
 			self.socket.send(data)
 		except socket.error:
-			print "UHOH"
+			self.close()
 
 		if not self.write_buffer:
-			self.server.w_list.remove(self)
 			self.close()
 
 	def handle_request(self, request):
