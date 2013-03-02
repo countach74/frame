@@ -4,13 +4,14 @@ import sys
 # Setup default config
 config = TreeDict({
 	'sessions': {
-		'backend': 'Memory',
+		'driver': 'memory',
 		'cookie_name': 'FrameSession',
 		'expires': 168,
 		'enabled': True,
 		
 		'memcache': {
-			'prefix': 'FRAME_SESSION::'
+			'prefix': 'FRAME_SESSION::',
+			'connection': None,
 		},
 		
 		'memory': {

@@ -3,8 +3,15 @@ from cgi import escape
 from _logger import logger
 
 
+_default_error_headers = {
+	'Content-Type': 'text/html',
+	'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+	'Pragma': 'no-cache'
+}
+
+
 class HTTPError(Exception):
-	def __init__(self, template=None, headers={'Content-Type': 'text/html'}):
+	def __init__(self, template=None, headers=_default_error_headers):
 		self.template = template or 'errors/%s.html' % self.code
 		self.headers = headers
 		self.parameters = {}
@@ -38,9 +45,10 @@ class Error301(HTTPError):
 		self.code = 301
 		HTTPError.__init__(self, *args, **kwargs)
 		
-		self.headers = {
+		self.headers = dict(_default_error_headers)
+		self.headers.update({
 			'Location': self.url
-		}
+		})
 		
 	def render(self, app):
 		self.app = app
@@ -51,7 +59,9 @@ class Error301(HTTPError):
 			
 			
 class Error302(Error301):
-	pass
+	def __init__(self, url, message='302 Found', *args, **kwargs):
+		self.code = 302
+		Error301.__init__(self, url, message, *args, **kwargs)
 
 
 class Error303(Error301):

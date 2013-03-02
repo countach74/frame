@@ -40,9 +40,8 @@ class Session(object):
 		return "<Session(%s, %s)>" % (self._key, self._data)
 
 	def _save(self, key, data):
-		if data:
-			self.save(key, data)
-			self.cleanup_sessions()
+		self.save(key, data)
+		self.cleanup_sessions()
 
 	def init(self):
 		pass
@@ -73,6 +72,7 @@ class Session(object):
 
 	def remove(self):
 		self.expire(self._key)
+		self._data = {}
 		
 	def commit(self):
 		self._save(self._key, self._data)
@@ -115,10 +115,8 @@ class MemcacheSession(Session):
 	def init(self):
 		import memcache
 
-		if not hasattr(self.interface, 'memcache'):
-			self.interface.memcache = self.memcache.Client(['127.0.0.1:11211'])
-
-		self.db = self.interface.memcache
+		if not self.db:
+			self.db = self.memcache.Client(['127.0.0.1:11211'])
 
 	def load(self, key):
 		import pickle
@@ -131,6 +129,14 @@ class MemcacheSession(Session):
 				raise SessionLoadError
 		else:
 			raise SessionLoadError
+	
+	@property
+	def db(self):
+		return config['sessions.memcache.connection']
+		
+	@db.setter
+	def db(self, value):
+		config['sessions.memcache.connection'] = value
 
 	def save(self, key, data):
 		expiration = self.time.mktime(self.get_expiration().timetuple())
@@ -146,7 +152,7 @@ class SessionInterface(object):
 
 	@property
 	def backend(self):
-		return globals()[config['sessions.backend'] + 'Session']
+		return globals()[config['sessions.driver'].title() + 'Session']
 
 	def get_session(self):
 		try:

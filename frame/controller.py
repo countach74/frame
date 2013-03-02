@@ -15,7 +15,7 @@ class Controller(object):
 	__metaclass__ = _ControllerMeta
 	app = app
 
-	def redirect(self, url, add_script_name=True, status='301 Moved Permanently'):
+	def redirect(self, url, add_script_name=True, status='302 Found'):
 		code, message = status.split(None, 1)
 		code = int(code)
 		
