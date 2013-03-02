@@ -40,10 +40,14 @@ class Session(object):
 
 	def __contains__(self, key):
 		return key in self._data
+		
+	def __repr__(self):
+		return "<Session(%s, %s)>" % (self._key, self._data)
 
 	def _save(self, key, data):
 		if self.modified:
 			self.save(key, data)
+			self.modified = False
 			self.cleanup_sessions()
 
 	def init(self):
@@ -134,6 +138,9 @@ class MemcacheSession(Session):
 	def save(self, key, data):
 		expiration = self.time.mktime(self.get_expiration().timetuple())
 		self.db.set(self.prefix + key, pickle.dumps(data), time=expiration)
+		
+	def expire(self, key):
+		self.db.set(self.prefix + key, '', time=-1)
 
 
 class SessionInterface(object):

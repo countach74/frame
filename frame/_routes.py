@@ -18,6 +18,8 @@ class Routes(object):
 		if match:
 			controller = self.controllers[match['controller']]
 			action = getattr(controller, match['action'])
+			self.current_controller = controller
+			self.current_action = action
 			return (action, match)
 
 		else:

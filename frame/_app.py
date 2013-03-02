@@ -89,6 +89,10 @@ class App(object):
 	@property
 	def Connection(self):
 		return self.orm.Connection
+		
+	@property
+	def current_controller(self):
+		return self.routes.current_controller
 
 	def _dispatch(self, environ):
 		self.request = Request(environ)
@@ -126,19 +130,23 @@ class App(object):
 
 				for i in self.pre_processors:
 					i(self.request, self.response)
+					
+				def save_session():
+					try:
+						self.session_interface.save_session(self.session)
+					except Exception, e:
+						raise Error500
 
 				try:
 					response_body = self.response.render(self.request.headers.query_string, data)
 				except HTTPError, e:
+					save_session()
 					raise e
 				except Exception, e:
 					raise Error500
 
 				# Save the session before yielding the response
-				try:
-					self.session_interface.save_session(self.session)
-				except Exception, e:
-					raise Error500
+				save_session()
 
 				status = self.response.status
 				headers = self.response.headers

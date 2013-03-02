@@ -15,6 +15,9 @@ from StringIO import StringIO
 # Needed for asynchronous server
 import select
 
+# Logger stuff
+from frame import logger
+
 
 def parse_body(request):
 	try:
@@ -184,7 +187,6 @@ class HTTPServer(object):
 
 	def _handle_signal(self, signum, frame):
 		if signum in (signal.SIGTERM, signal.SIGINT):
-			sys.stderr.write("Shutting down...\n")
 			self.stop(True)
 
 	def setup_signal_handlers(self):
@@ -196,7 +198,11 @@ class HTTPServer(object):
 		self.setup_signal_handlers()
 
 		while self.running:
-			r_ready, w_ready, e_ready = select.select(self.r_list, self.w_list, self.e_list)
+			try:
+				r_ready, w_ready, e_ready = select.select(self.r_list, self.w_list, self.e_list)
+			except select.error:
+				r_ready, w_ready, e_ready = [], [], []
+				self.running = False
 
 			for i in r_ready:
 				if i is self.socket:
@@ -212,10 +218,10 @@ class HTTPServer(object):
 
 			for i in e_ready:
 				i.handle_error()
-
+				
 	def stop(self, stop_monitor=False):
-		self.running = False
-
+		logger.log_info("Shutting down Frame HTTP Server...")
+		
 		for i in self.connections:
 			i.shutdown()
 			i.close()

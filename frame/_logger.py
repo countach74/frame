@@ -74,6 +74,10 @@ class Logger(object):
 		
 	def log_critical(self, message):
 		self.log_message('CRITICAL', message)
+		
+	def log_exception(self, message):
+		with open('/tmp/frame.exceptions', 'a') as f:
+			f.write(message)
 
 		
 class StdoutLogger(Logger):
