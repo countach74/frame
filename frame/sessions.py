@@ -40,8 +40,9 @@ class Session(object):
 		return "<Session(%s, %s)>" % (self._key, self._data)
 
 	def _save(self, key, data):
-		self.save(key, data)
-		self.cleanup_sessions()
+		if data:
+			self.save(key, data)
+			self.cleanup_sessions()
 
 	def init(self):
 		pass
