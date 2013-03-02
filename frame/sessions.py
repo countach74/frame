@@ -13,9 +13,6 @@ class Session(object):
 		self._app = app
 		self.interface = interface
 
-		# Set default modified value to False
-		self.modified = False
-		
 		# Create session cookie if it does not already exist
 		key_name = config['sessions.cookie_name']
 		expires = config['sessions.expires']
@@ -29,13 +26,11 @@ class Session(object):
 			self._key = self.make_session_key()
 			self._data = {}
 			app.response.set_cookie(key_name, self._key, expires=expires)
-			self.modified = True
 
 	def __getitem__(self, key):
 		return self._data[key]
 
 	def __setitem__(self, key, value):
-		self.modified = True
 		self._data[key] = value
 
 	def __contains__(self, key):
@@ -45,10 +40,8 @@ class Session(object):
 		return "<Session(%s, %s)>" % (self._key, self._data)
 
 	def _save(self, key, data):
-		if self.modified:
-			self.save(key, data)
-			self.modified = False
-			self.cleanup_sessions()
+		self.save(key, data)
+		self.cleanup_sessions()
 
 	def init(self):
 		pass
@@ -79,6 +72,9 @@ class Session(object):
 
 	def remove(self):
 		self.expire(self._key)
+		
+	def commit(self):
+		self._save(self._key, self._data)
 
 
 class MemorySession(Session):
