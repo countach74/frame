@@ -5,7 +5,6 @@ import datetime
 from uuid import uuid4
 from _config import config
 import os
-from fcntl import flock, LOCK_EX, LOCK_UN
 from threading import RLock
 
 
@@ -191,20 +190,17 @@ class FileSession(Session):
 		path = self.get_path(key)
 		
 		def load_session(f):
-			data = f.read()
-			session = pickle.loads(data)
+			session = pickle.load(f)
 			return session['data']
 		
 		try:
-			f = open(path, 'r+')
+			with open(path, 'r') as f:
+				result = load_session(f)
+				self.__lock.release()
+				return result
 		except EnvironmentError:
 			self.__lock.release()
 			raise SessionLoadError
-		flock(f, LOCK_EX)
-		result = load_session(f)
-		f.close()
-		self.__lock.release()
-		return result
 		
 	def save(self, key, data):
 		self.__lock.acquire()
@@ -216,13 +212,15 @@ class FileSession(Session):
 				'expiration': self.get_expiration()
 			}
 			
-			pickled_session = pickle.dumps(session)
-			f.write(pickled_session)
+			pickle.dump(session, f)
 			
-		f = open(path, 'w')
-		flock(f, LOCK_EX)
-		save_session(f)
-		f.close()
+		try:
+			with open(path, 'w') as f:
+				save_session(f)
+		except EnvironmentError, e:
+			self.__lock.release()
+			raise EnvironmentError(e)
+			
 		self.__lock.release()
 		
 	def cleanup_sessions(self):
@@ -232,19 +230,18 @@ class FileSession(Session):
 			minutes=config['sessions.cleanup_frequency'])
 			
 		if now > threshold:
-			self.__lock.acquire()
 			for dirpath, dirnames, filenames in os.walk(session_path):
 				for i in filenames:
 					path = os.path.join(dirpath, i)
 				
+					self.__lock.acquire()
 					with open(path, 'r+') as f:
-						flock(f.fileno(), LOCK_EX)
 						session_data = pickle.load(f)
-						flock(f.fileno(), LOCK_UN)
 					
 					if now > session_data['expiration']:
 						os.remove(path)
-			self.__lock.release()
+						
+					self.__lock.release()
 		
 	def expire(self, key):
 		self.__lock.acquire()
