@@ -15,7 +15,7 @@ class Response(object):
 		self.controller = controller
 		self.headers = DotDict({
 			'Content-Type': 'text/html',
-			'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+			'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0',
 			'Pragma': 'no-cache'
 		})
 		self.status = '200 OK'

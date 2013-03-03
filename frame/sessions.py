@@ -4,6 +4,9 @@ from errors import SessionLoadError, SessionSaveError
 import datetime
 from uuid import uuid4
 from _config import config
+import os
+from fcntl import flock, LOCK_EX, LOCK_UN
+from threading import RLock
 
 
 class Session(object):
@@ -76,6 +79,178 @@ class Session(object):
 		
 	def commit(self):
 		self._save(self._key, self._data)
+		
+		
+class MysqlSession(Session):
+	__last_cleanup = datetime.datetime.now()
+	__lock = RLock()
+	
+	try:
+		import MySQLdb as __mysql
+	except ImportError:
+		raise ImportError("Could not use mysql session backend: MySQLdb module not found.")
+	
+	@property
+	def __connection(self):
+		return config['sessions.mysql.connection']
+		
+	@__connection.setter
+	def __connection(self, value):
+		config['sessions.mysql.connection'] = value
+			
+	def __init__(self, *args, **kwargs):
+		if not self.__connection:
+			settings = config['sessions']['mysql']
+			
+			required_fields = (
+				'database',
+				'user',
+				'password',
+				'table'
+			)
+			
+			if any((not settings[i] for i in required_fields)):
+				raise StandardError("Could not setup MySQL connection. The following configuration "
+					"options must be set: %s" % ', '.join(required_fields))
+			else:
+				self.__connection = self.__mysql.Connection(
+					host=settings['host'],
+					port=settings['port'],
+					user=settings['user'],
+					passwd=settings['password'],
+					db=settings['database']
+				)
+				
+		Session.__init__(self, *args, **kwargs)
+				
+	def load(self, key):
+		self.__lock.acquire()
+		table = config['sessions.mysql.table']
+		cursor = self.__connection.cursor()
+		
+		cursor.execute("select data from %s where session_id=%%s limit 1" % table, key)
+		result = cursor.fetchone()
+		
+		self.__lock.release()
+		if result:
+			return pickle.loads(result[0])
+			
+		else:
+			raise SessionLoadError
+		
+	def save(self, key, data):
+		self.__lock.acquire()
+		table = config['sessions.mysql.table']
+		cursor = self.__connection.cursor()
+		expiration = self.get_expiration()
+		pickled_data = pickle.dumps(data)
+		
+		cursor.execute(
+			"replace into %s(session_id, expiration, data) values(%%s, %%s, %%s)" % table,
+			(key, expiration, pickled_data))
+			
+		self.__connection.commit()
+		self.__lock.release()
+			
+	def expire(self, key):
+		self.__lock.acquire()
+		cursor = self.__connection.cursor()
+		table = config['sessions.mysql.table']
+		
+		cursor.execute("delete from %s where session_id = %%s" % table,
+			key)
+			
+		self.__connection.commit()
+		self.__lock.release()
+			
+	def cleanup_sessions(self):
+		now = datetime.datetime.now()
+		threshold = self.__last_cleanup + datetime.timedelta(minutes=config['sessions.cleanup_frequency'])
+		
+		if now > threshold:
+			self.__lock.acquire()
+			table = config['sessions.mysql.table']
+			cursor = self.__connection.cursor()
+			now = datetime.datetime.now()
+		
+			cursor.execute("delete from %s where expiration >= %%s" % table, now)
+			
+			self.__connection.commit()
+			self.__lock.release()
+		
+		
+class FileSession(Session):
+	__lock = RLock()
+	last_cleanup = datetime.datetime.utcnow()
+	
+	def get_path(self, key):
+		return os.path.join(config['sessions.file.directory'], key)
+	
+	def load(self, key):
+		self.__lock.acquire()
+		path = self.get_path(key)
+		
+		def load_session(f):
+			data = f.read()
+			session = pickle.loads(data)
+			return session['data']
+		
+		try:
+			f = open(path, 'r+')
+		except EnvironmentError:
+			self.__lock.release()
+			raise SessionLoadError
+		flock(f, LOCK_EX)
+		result = load_session(f)
+		f.close()
+		self.__lock.release()
+		return result
+		
+	def save(self, key, data):
+		self.__lock.acquire()
+		path = self.get_path(key)
+		
+		def save_session(f):
+			session = {
+				'data': data,
+				'expiration': self.get_expiration()
+			}
+			
+			pickled_session = pickle.dumps(session)
+			f.write(pickled_session)
+			
+		f = open(path, 'w')
+		flock(f, LOCK_EX)
+		save_session(f)
+		f.close()
+		self.__lock.release()
+		
+	def cleanup_sessions(self):
+		session_path = config['sessions.file.directory']
+		now = datetime.datetime.utcnow()
+		threshold = self.last_cleanup + datetime.timedelta(
+			minutes=config['sessions.cleanup_frequency'])
+			
+		if now > threshold:
+			self.__lock.acquire()
+			for dirpath, dirnames, filenames in os.walk(session_path):
+				for i in filenames:
+					path = os.path.join(dirpath, i)
+				
+					with open(path, 'r+') as f:
+						flock(f.fileno(), LOCK_EX)
+						session_data = pickle.load(f)
+						flock(f.fileno(), LOCK_UN)
+					
+					if now > session_data['expiration']:
+						os.remove(path)
+			self.__lock.release()
+		
+	def expire(self, key):
+		self.__lock.acquire()
+		path = self.get_path(key)
+		os.remove(path)
+		self.__lock.release()
 
 
 class MemorySession(Session):
@@ -96,7 +271,9 @@ class MemorySession(Session):
 
 	def cleanup_sessions(self):
 		now = datetime.datetime.utcnow()
-		threshold = self.last_cleanup + datetime.timedelta(minutes=config['sessions.memory.cleanup_frequency'])
+		threshold = self.last_cleanup + datetime.timedelta(
+			minutes=config['sessions.cleanup_frequency'])
+			
 		if now > threshold:
 			for k, v in self.sessions.items():
 				if now > v['expiration']:

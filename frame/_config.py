@@ -4,9 +4,10 @@ import sys
 # Setup default config
 config = TreeDict({
 	'sessions': {
-		'driver': 'memory',
+		'driver': 'file',
 		'cookie_name': 'FrameSession',
 		'expires': 168,
+		'cleanup_frequency': 30,
 		'enabled': True,
 		
 		'memcache': {
@@ -15,7 +16,18 @@ config = TreeDict({
 		},
 		
 		'memory': {
-			'cleanup_frequency': 30,
+		},
+		'file': {
+			'directory': 'sessions',
+		},
+		'mysql': {
+			'host': 'localhost',
+			'port': 3306,
+			'connection': None,
+			'database': None,
+			'user': None,
+			'password': None,
+			'table': 'frame_sessions'
 		}
 	},
 	
@@ -27,7 +39,7 @@ config = TreeDict({
 		'name': 'FrameApp'
 	},
 	
-	'pre_processors': ['form_url_encoder', 'form_ajax'],
+	'pre_processors': ['form_url_encoder', 'form_json_encoder', 'form_multipart_encoder'],
 	'post_processors': [],
 	'timezone': 'America/Los_Angeles',
 	'logger': {

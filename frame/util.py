@@ -5,6 +5,23 @@ are used internally by Frame; some are designed to be used by web developers.
 
 
 import re
+import types
+
+
+class Decorator(object):
+	def __get__(self, instance, parent=None):
+		return types.MethodType(self, instance)
+		
+		
+class Authorization(Decorator):
+	def __init__(self, groups=[], users=[]):
+		self.groups = groups
+		self.users = users
+		
+	def __call__(self, f):
+		def auth(*args, **kwargs):
+			return self.authorize(f, *args, **kwargs)
+		return auth
 
 
 def parse_query_string(string):
