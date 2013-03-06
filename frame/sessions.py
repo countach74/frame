@@ -202,6 +202,9 @@ class FileSession(Session):
 		except EnvironmentError:
 			self.__lock.release()
 			raise SessionLoadError
+		except Exception, e:
+			self.__lock.release()
+			raise e
 		
 	def save(self, key, data):
 		self.__lock.acquire()
@@ -218,9 +221,12 @@ class FileSession(Session):
 		try:
 			with open(path, 'w') as f:
 				save_session(f)
-		except EnvironmentError, e:
+		except IOError:
 			self.__lock.release()
-			raise EnvironmentError(e)
+			raise SessionSaveError
+		except Exception, e:
+			self.__lock.release()
+			raise e
 			
 		self.__lock.release()
 		
@@ -253,8 +259,11 @@ class FileSession(Session):
 	def expire(self, key):
 		self.__lock.acquire()
 		path = self.get_path(key)
-		os.remove(path)
-		self.__lock.release()
+		try:
+			os.remove(path)
+		except IOError:
+			self.__lock.release()
+			logger.log_warning("Could not remove session file '%s'" % path)
 
 
 class MemorySession(Session):
