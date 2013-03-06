@@ -88,6 +88,9 @@ class StdoutLogger(Logger):
 		self.out = out
 		self.err = err
 		
+	def log_exception(self, message):
+		self.log_critical(message)
+		
 		
 class NullLogger(Logger):
 	def __init__(self):
@@ -109,6 +112,9 @@ class ProductionLogger(Logger):
 	def log_message(self, level, message):
 		priority = getattr(self.syslog, 'LOG_%s' % level.upper())
 		self.syslog.syslog(priority, message)
+		
+	def log_exception(self, message):
+		self.log_critical(message)
 		
 		
 class LogInterface(object):
