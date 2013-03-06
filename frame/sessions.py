@@ -6,7 +6,7 @@ from uuid import uuid4
 from _config import config
 import os
 from threading import RLock
-from logger import logger
+from _logger import logger
 
 
 class Session(object):
