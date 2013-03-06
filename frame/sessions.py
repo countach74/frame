@@ -6,6 +6,7 @@ from uuid import uuid4
 from _config import config
 import os
 from threading import RLock
+from logger import logger
 
 
 class Session(object):
@@ -235,13 +236,19 @@ class FileSession(Session):
 					path = os.path.join(dirpath, i)
 				
 					self.__lock.acquire()
-					with open(path, 'r+') as f:
-						session_data = pickle.load(f)
-					
-					if now > session_data['expiration']:
-						os.remove(path)
-						
-					self.__lock.release()
+					try:
+						with open(path, 'r+') as f:
+							session_data = pickle.load(f)
+	
+						if now > session_data['expiration']:
+							try:
+								os.remove(path)
+							except IOError:
+								self.__lock.release()
+								logger.log_warning("Could not remove session file '%s'" % path)
+					except Exception, e:
+						self.__lock.release()
+						raise e
 		
 	def expire(self, key):
 		self.__lock.acquire()
