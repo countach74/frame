@@ -5,6 +5,7 @@ import os
 
 # Frame's library path
 __frame_path = os.path.dirname(os.path.abspath(__file__))
+__app_name = sys.argv[0]
 
 
 # Setup default config
@@ -42,7 +43,7 @@ config = TreeDict({
 	},
 	
 	'application': {
-		'name': 'FrameApp'
+		'name': 'Frame (%s)' % __app_name
 	},
 	
 	'pre_processors': ['form_url_encoder', 'form_json_encoder', 'form_multipart_encoder'],
@@ -51,19 +52,13 @@ config = TreeDict({
 	'logger': {
 		'driver': 'stdout',
 		'production': {
-			'options': {
-				'facility': 'user'
-			}
+			'facility': 'user'
 		},
 		'stdout': {
-			'options': {
-				'out': sys.stdout,
-				'err': sys.stderr
-			}
+			'out': sys.stdout,
+			'err': sys.stderr
 		},
-		'null': {
-			'options': {}
-		}
+		'null': {}
 	},
 	'static_map': {
 		'/static': 'static',

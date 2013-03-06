@@ -124,7 +124,7 @@ class LogInterface(object):
 	def setup_logger(self):
 		if not self.logger:
 			driver = config['logger.driver']
-			options = config['logger'][driver]['options']
+			options = config['logger'][driver]
 			self.logger = globals()[driver.title() + 'Logger'](**options)
 			
 	def __getattr__(self, key):
