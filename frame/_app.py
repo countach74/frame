@@ -32,19 +32,12 @@ from _config import config
 
 # Import logger
 from _logger import logger
-
-
-__frame_path = os.path.dirname(os.path.abspath(__file__))
-
-_default_static_map = {
-	'/static': 'static',
-	'/static/frame': os.path.join(__frame_path, 'static')
-}
+from util import truncate
 
 
 class App(object):
-	def __init__(self, template_dir='templates', debug=True, static_map=_default_static_map):
-		self.static_map = StaticDispatcher(static_map)
+	def __init__(self, template_dir='templates', debug=True):
+		self.static_map = StaticDispatcher()
 		self._template_dir = template_dir
 		self.path = os.path.dirname(os.path.abspath(sys.argv[0]))
 		self.routes = routes
@@ -198,6 +191,11 @@ class App(object):
 		
 		for i in config['post_processors']:
 			self.post_processors.append(getattr(postprocessors, i))
+
+		for mapping, path in config['static_map'].items():
+			logger.log_info("Mapping static directory: '%s' => '%s'" % (
+				mapping, truncate(path, 40)))
+			self.static_map[mapping] = path
 
 	def start_fcgi(self, *args, **kwargs):
 		from flup.server.fcgi import WSGIServer

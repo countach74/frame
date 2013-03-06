@@ -71,3 +71,12 @@ def make_resource(controller, path):
 		'base_uri': path,
 		'template_dir': template_dir
 	}
+
+
+def truncate(text, length=30):
+	if len(text) > length:
+		first_half = text[0:length/2]
+		second_half = text[-length/2:]
+		return "%s...%s" % (first_half, second_half)
+	else:
+		return text

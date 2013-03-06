@@ -5,8 +5,8 @@ import mimetypes
 
 
 class StaticDispatcher(object):
-	def __init__(self, static_map):
-		self.static_map = static_map
+	def __init__(self, static_map=None):
+		self.static_map = static_map if static_map else {}
 		self._resolve_map()
 
 	def __getitem__(self, key):

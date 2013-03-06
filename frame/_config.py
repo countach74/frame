@@ -1,5 +1,11 @@
 from treedict import TreeDict
 import sys
+import os
+
+
+# Frame's library path
+__frame_path = os.path.dirname(os.path.abspath(__file__))
+
 
 # Setup default config
 config = TreeDict({
@@ -58,5 +64,9 @@ config = TreeDict({
 		'null': {
 			'options': {}
 		}
+	},
+	'static_map': {
+		'/static': 'static',
+		'/static/frame': os.path.join(__frame_path, 'static')
 	}
 })
