@@ -73,7 +73,7 @@ class Logger(object):
 		self.log_message('WARNING', message)
 		
 	def log_critical(self, message):
-		self.log_message('CRITICAL', message)
+		self.log_message('CRIT', message)
 		
 	def log_exception(self, message):
 		pass
