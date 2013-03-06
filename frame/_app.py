@@ -206,12 +206,12 @@ class App(object):
 		logger.log_info("Starting FLUP WSGI Server...")
 		WSGIServer(self, *args, **kwargs).run()
 
-	def start_http(self, *args, **kwargs):
+	def start_http(self, host='127.0.0.1', port=8080, *args, **kwargs):
 		from frame.server.http import HTTPServer
 		
 		self._prep_start()
-		logger.log_info("Starting Frame HTTP Server...")
-		HTTPServer(self, *args, **kwargs).run()
+		logger.log_info("Starting Frame HTTP Server on %s:%s..." % (host, port))
+		HTTPServer(self, host=host, port=port, *args, **kwargs).run()
 
 	def start_wsgi(self, host='127.0.0.1', port=8080, *args, **kwargs):
 		from wsgiref.simple_server import make_server
