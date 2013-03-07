@@ -76,20 +76,13 @@ class Logger(object):
 		self.log_message('CRIT', message)
 		
 	def log_exception(self, message):
-		pass
-		'''
-		with open('/tmp/frame.exceptions', 'a') as f:
-			f.write(message)
-		'''
+		self.log_critical(message)
 
 		
 class StdoutLogger(Logger):
 	def __init__(self, out, err):
 		self.out = out
 		self.err = err
-		
-	def log_exception(self, message):
-		self.log_critical(message)
 		
 		
 class NullLogger(Logger):
@@ -102,11 +95,13 @@ class NullLogger(Logger):
 class ProductionLogger(Logger):
 	import syslog
 	
-	def __init__(self, facility):
+	def __init__(self, facility, out, err):
 		facility = getattr(self.syslog, 'LOG_%s' % facility.upper())
 		self.syslog.openlog(config['application.name'], 0, facility)
-		self.err = None
+		self.out = out
+		self.err = err
 		
+	'''
 	@property
 	def out(self):
 		
@@ -118,13 +113,11 @@ class ProductionLogger(Logger):
 				self.logger.log_info(data.rstrip())
 			
 		return WriteOut(self)
+	'''
 	
 	def log_message(self, level, message):
 		priority = getattr(self.syslog, 'LOG_%s' % level.upper())
 		self.syslog.syslog(priority, message)
-		
-	def log_exception(self, message):
-		self.log_critical(message)
 		
 		
 class LogInterface(object):

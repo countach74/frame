@@ -6,6 +6,7 @@ are used internally by Frame; some are designed to be used by web developers.
 
 import re
 import types
+from threading import RLock
 
 
 class Decorator(object):
@@ -80,3 +81,22 @@ def truncate(text, length=30):
 		return "%s...%s" % (first_half, second_half)
 	else:
 		return text
+
+
+class FileLogger(object):
+	def __init__(self, path):
+		self.path = path
+		self.lock = RLock()
+		
+		try:
+			self.file = open(path, 'a')
+		except EnvironmentError, e:
+			raise e.__class__("%s does not appear to be writable." % path)
+		
+	def write(self, data):
+		self.lock.acquire()
+		try:
+			self.file.write(data)
+			self.file.flush()
+		finally:
+			self.lock.release()

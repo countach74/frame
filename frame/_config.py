@@ -52,7 +52,9 @@ config = TreeDict({
 	'logger': {
 		'driver': 'stdout',
 		'production': {
-			'facility': 'user'
+			'facility': 'user',
+			'out': sys.stdout,
+			'err': sys.stderr
 		},
 		'stdout': {
 			'out': sys.stdout,
