@@ -105,9 +105,19 @@ class ProductionLogger(Logger):
 	def __init__(self, facility):
 		facility = getattr(self.syslog, 'LOG_%s' % facility.upper())
 		self.syslog.openlog(config['application.name'], 0, facility)
-		null = open(os.devnull, 'w')
-		self.out = null
 		self.err = None
+		
+	@property
+	def out(self):
+		
+		class WriteOut(object):
+			def __init__(self, logger):
+				self.logger = logger
+				
+			def write(self, data):
+				self.logger.log_info(data.rstrip())
+			
+		return WriteOut(self)
 	
 	def log_message(self, level, message):
 		priority = getattr(self.syslog, 'LOG_%s' % level.upper())
