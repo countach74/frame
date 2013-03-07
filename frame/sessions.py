@@ -169,6 +169,7 @@ class MysqlSession(Session):
 		
 		if now > threshold:
 			self.__lock.acquire()
+			self.__last_cleanup = datetime.datetime.now()
 			table = config['sessions.mysql.table']
 			cursor = self.__connection.cursor()
 			now = datetime.datetime.now()
@@ -237,6 +238,7 @@ class FileSession(Session):
 			minutes=config['sessions.cleanup_frequency'])
 			
 		if now > threshold:
+			self.last_cleanup = datetime.datetime.now()
 			logger.log_info("Starting session cleanup...")
 			for dirpath, dirnames, filenames in os.walk(session_path):
 				for i in filenames:
@@ -290,6 +292,7 @@ class MemorySession(Session):
 			minutes=config['sessions.cleanup_frequency'])
 			
 		if now > threshold:
+			self.last_cleanup = datetime.datetime.now()
 			for k, v in self.sessions.items():
 				if now > v['expiration']:
 					del(self.sessions[k])
