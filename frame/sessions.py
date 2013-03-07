@@ -82,7 +82,7 @@ class Session(object):
 		
 		
 class MysqlSession(Session):
-	__last_cleanup = datetime.datetime.now()
+	__last_cleanup = datetime.datetime.utcnow()
 	__lock = RLock()
 	
 	try:
@@ -169,7 +169,7 @@ class MysqlSession(Session):
 		
 		if now > threshold:
 			self.__lock.acquire()
-			self.__last_cleanup = datetime.datetime.now()
+			self.__last_cleanup = datetime.datetime.utcnow()
 			table = config['sessions.mysql.table']
 			cursor = self.__connection.cursor()
 			now = datetime.datetime.now()
@@ -232,15 +232,13 @@ class FileSession(Session):
 		self.__lock.release()
 		
 	def cleanup_sessions(self):
-		pass
-		'''
 		session_path = config['sessions.file.directory']
 		now = datetime.datetime.utcnow()
-		threshold = self.last_cleanup + datetime.timedelta(
+		threshold = FileSession.last_cleanup + datetime.timedelta(
 			minutes=config['sessions.cleanup_frequency'])
 			
 		if now > threshold:
-			self.last_cleanup = datetime.datetime.now()
+			FileSession.last_cleanup = datetime.datetime.utcnow()
 			logger.log_info("Starting session cleanup...")
 			for dirpath, dirnames, filenames in os.walk(session_path):
 				for i in filenames:
@@ -263,8 +261,9 @@ class FileSession(Session):
 					except Exception, e:
 						self.__lock.release()
 						raise e
+					else:
+						self.__lock.release()
 			logger.log_info("Session cleanup complete")
-		'''
 		
 	def expire(self, key):
 		self.__lock.acquire()
@@ -294,14 +293,16 @@ class MemorySession(Session):
 
 	def cleanup_sessions(self):
 		now = datetime.datetime.utcnow()
-		threshold = self.last_cleanup + datetime.timedelta(
+		threshold = MemorySession.last_cleanup + datetime.timedelta(
 			minutes=config['sessions.cleanup_frequency'])
 			
 		if now > threshold:
-			self.last_cleanup = datetime.datetime.now()
+			logger.log_info("Starting session cleanup...")
+			MemorySession.last_cleanup = datetime.datetime.utcnow()
 			for k, v in self.sessions.items():
 				if now > v['expiration']:
 					del(self.sessions[k])
+			logger.log_info("Session cleanup complete")
 
 	def expire(self, key):
 		if key in self.sessions:
