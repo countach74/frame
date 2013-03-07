@@ -54,15 +54,22 @@ class Response(object):
 			params.items() +
 			uri_data.items() +
 			self.additional_params.items()))
-			
-		if hasattr(self.controller.im_self, '__resource__') and (
-			result is None or isinstance(result, dict)):
-			
+		
+		if result is None or isinstance(result, dict):
 			method_name = self.controller.__name__
-			template_dir = self.controller.im_self.__resource__['template_dir']
-			template_path = os.path.join(template_dir, method_name + '.html')
 			
-			result = self.controller.im_self.get_template(template_path).render(
-				result if result else {})
+			if hasattr(self.controller.im_self, '__resource__'):
+				template_dir = self.controller.im_self.__resource__['template_dir']
+				template_path = os.path.join(template_dir, method_name + '.html')
+			
+				result = self.controller.im_self.get_template(template_path).render(
+					result if result else {})
+					
+			else:
+				template_dir = self.controller.im_self.__class__.__name__.lower()
+				template_path = os.path.join(template_dir, method_name + '.html')
+				
+				result = self.controller.im_self.get_template(template_path).render(
+					result if result else {})
 
 		return result

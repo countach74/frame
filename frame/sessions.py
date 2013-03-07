@@ -41,6 +41,9 @@ class Session(object):
 		
 	def __repr__(self):
 		return "<Session(%s, %s)>" % (self._key, self._data)
+		
+	def __str__(self):
+		return str(self._data)
 
 	def _save(self, key, data):
 		self.save(key, data)

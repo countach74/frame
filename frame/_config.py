@@ -43,7 +43,8 @@ config = TreeDict({
 	},
 	
 	'application': {
-		'name': 'Frame (%s)' % __app_name
+		'name': 'Frame (%s)' % __app_name,
+		'strip_trailing_slash': True
 	},
 	
 	'pre_processors': ['form_url_encoder', 'form_json_encoder', 'form_multipart_encoder'],

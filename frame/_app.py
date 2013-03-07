@@ -91,6 +91,9 @@ class App(object):
 
 	def _dispatch(self, environ):
 		self.request = Request(environ)
+		
+		if config['application.strip_trailing_slash']:
+			environ['PATH_INFO'] = environ.get('PATH_INFO', '').rstrip('/')
 
 		try:
 			match, data = routes.match(environ=environ)
@@ -98,6 +101,10 @@ class App(object):
 		# If TypeError or AttributeError occurs then no match was found; we should throw a 404.
 		except (TypeError, AttributeError):
 			return self.static_map.match(environ)
+			
+		# Any other errors are unexpected
+		except Exception, e:
+			raise Error500
 
 		# Otherwise, we should be good to handle the request
 		else:

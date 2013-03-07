@@ -22,13 +22,17 @@ class Authorization(Decorator):
 	def __call__(self, f):
 		def auth(*args, **kwargs):
 			return self.authorize(f, *args, **kwargs)
+			
+		# Fix the auto-template routing issue w/decorators
+		auth.__name__ = f.__name__
+		
 		return auth
 
 
 def parse_query_string(string):
 	from cgi import parse_qs
 
-	data = parse_qs(string)
+	data = parse_qs(string, True)
 	for key, value in data.items():
 		if len(value) == 1:
 			data[key] = value[0]
