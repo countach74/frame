@@ -232,6 +232,8 @@ class FileSession(Session):
 		self.__lock.release()
 		
 	def cleanup_sessions(self):
+		pass
+		'''
 		session_path = config['sessions.file.directory']
 		now = datetime.datetime.utcnow()
 		threshold = self.last_cleanup + datetime.timedelta(
@@ -262,6 +264,7 @@ class FileSession(Session):
 						self.__lock.release()
 						raise e
 			logger.log_info("Session cleanup complete")
+		'''
 		
 	def expire(self, key):
 		self.__lock.acquire()
