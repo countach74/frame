@@ -255,6 +255,9 @@ class FileSession(Session):
 							except IOError:
 								self.__lock.release()
 								logger.log_warning("Could not remove session file '%s'" % path)
+							except Exception, e:
+									self.__lock.release()
+									raise e
 					except Exception, e:
 						self.__lock.release()
 						raise e
