@@ -89,14 +89,15 @@ class FileLogger(object):
 		self.lock = RLock()
 		
 		try:
-			self.file = open(path, 'a')
+			with open(path, 'a') as f:
+				pass
 		except EnvironmentError, e:
 			raise e.__class__("%s does not appear to be writable." % path)
 		
 	def write(self, data):
 		self.lock.acquire()
 		try:
-			self.file.write(data)
-			self.file.flush()
+			with open(self.path, 'a') as f:
+				f.write(data)
 		finally:
 			self.lock.release()
