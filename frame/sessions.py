@@ -237,6 +237,7 @@ class FileSession(Session):
 			minutes=config['sessions.cleanup_frequency'])
 			
 		if now > threshold:
+			logger.log_info("Starting session cleanup...")
 			for dirpath, dirnames, filenames in os.walk(session_path):
 				for i in filenames:
 					path = os.path.join(dirpath, i)
@@ -255,6 +256,7 @@ class FileSession(Session):
 					except Exception, e:
 						self.__lock.release()
 						raise e
+			logger.log_info("Session cleanup complete")
 		
 	def expire(self, key):
 		self.__lock.acquire()
