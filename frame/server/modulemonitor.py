@@ -36,7 +36,8 @@ class ModuleMonitor(threading.Thread):
 					logger.log_info("File changed, reloading server...")
 					self.server.stop()
 					old_stats = new_stats
-					os.execvpe(self.path, sys.argv, os.environ)
+					args = ['python'] + list(sys.argv) + [os.environ]
+					os.execle('/usr/bin/env', '', *args)
 				old_stats = new_stats
 			time.sleep(1)
 
