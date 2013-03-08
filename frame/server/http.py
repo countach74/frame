@@ -88,7 +88,7 @@ class Connection(object):
 			'SERVER_PORT': self.server.port,
 			'SERVER_NAME': self.server.host,
 			'SERVER_PROTOCOL': 'HTTP/1.1',
-			'SERVER_SOFTWARE': 'poopyd/0.1a',
+			'SERVER_SOFTWARE': 'Frame/0.1a',
 			'REMOTE_ADDR': self.addr[0],
 			'REMOTE_PORT': self.addr[1],
 			'GATEWAY_INTERFACE': 'CGI/1.1',
@@ -99,13 +99,13 @@ class Connection(object):
 			'REDIRECT_STATUS': 200
 		}
 
-		all_headers = dict(request_headers.items() + wsgi_environ.items() + other_headers.items() + uri_headers.items())
-
-		response = []
+		all_headers = dict(request_headers.items() + wsgi_environ.items() +
+			other_headers.items() + uri_headers.items())
 
 		try:
-			response.extend(self.server.app(all_headers, self.start_response))
+			response = self.server.app(all_headers, self.start_response)
 		except Exception, e:
+			response = []
 			self.status = '500 Internal Server Error'
 			self.headers = [('Content-Type', 'text/html')]
 
@@ -117,10 +117,13 @@ class Connection(object):
 
 		finally:
 			# Send headers
-			self.send_headers(self.status, self.headers)
-
+			headers_sent = False
+			
 			# Send response
 			for i in response:
+				if not headers_sent:
+					self.send_headers(self.status, self.headers)
+					headers_sent = True
 				self.send(i)
 
 	def send_headers(self, status, headers):
@@ -153,11 +156,12 @@ class Connection(object):
 
 
 class HTTPServer(object):
-	def __init__(self, app, host='localhost', port=8080, listen=5, max_read=8092, auto_reload=True):
+	def __init__(self, app, host='localhost', port=8080, listen=5, max_read=8092, chunk_size=4096, auto_reload=True):
 		self.app = app
 		self.host = host
 		self.port = port
 		self.listen = listen
+		self.chunk_size = chunk_size
 		self.max_read = max_read
 		self.auto_reload = auto_reload
 

@@ -5,7 +5,8 @@ import mimetypes
 
 
 class StaticDispatcher(object):
-	def __init__(self, static_map=None):
+	def __init__(self, app, static_map=None):
+		self.app = app
 		self.static_map = static_map if static_map else {}
 		self._resolve_map()
 
@@ -21,6 +22,13 @@ class StaticDispatcher(object):
 	def _resolve_map(self):
 		for i in self.static_map:
 			self.static_map[i] = os.path.abspath(self.static_map[i])
+			
+	def read_file(self, filepath):
+		f = open(filepath, 'r')
+		data = f.read(4096)
+		while data:
+			yield data
+			data = f.read(4096)
 
 	def match(self, environ):
 		for key, value in self.static_map.items():
@@ -39,11 +47,11 @@ class StaticDispatcher(object):
 					try:
 						headers = {'Content-Type': mimetypes.types_map[extension]}
 					except KeyError:
-						headers = {'Content-Type': 'text/plain'}
+						headers = {'Content-Type': 'application/octet-stream'}
 					try:
-						response_body = open(file_path, 'r').read()
-					except IOError:
-						raise Error404
+						response_body = self.read_file(file_path)
+					except EnvironmentError:
+						raise Error401
 
 				else:
 					continue

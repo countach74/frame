@@ -6,7 +6,7 @@ import os
 
 
 class Logger(object):
-	def populate_format_data(self, request, status, headers, response_body):
+	def populate_format_data(self, request, status, headers, response_length):
 		now = datetime.datetime.now()
 		local_tz = timezone(config['timezone'])
 		
@@ -40,7 +40,7 @@ class Logger(object):
 				headers.request_uri if 'request_uri' in headers else '-',
 				headers.server_protocol if 'server_protocol' in headers else '-'),
 			'status_code': status_code,
-			'body_size': len(response_body),
+			'body_size': response_length,
 			'local_address': headers.server_addr if 'server_addr' in headers else '-',
 			'environment': request.environ,
 			'request_protocol': headers.server_protocol if 'server_protocol' in headers else '-',
@@ -53,8 +53,8 @@ class Logger(object):
 			'referer': referer
 		}
 		
-	def log_request(self, request, status, headers, response_body):
-		format_data = self.populate_format_data(request, status, headers, response_body)
+	def log_request(self, request, status, headers, response_length):
+		format_data = self.populate_format_data(request, status, headers, response_length)
 		
 		self.out.write(
 			"%(remote_host)s [%(timestamp)s] \"%(request_line)s\" %(status_code)s "

@@ -37,7 +37,7 @@ from util import truncate, Singleton
 
 class App(Singleton):
 	def __init__(self, template_dir='templates', debug=True):
-		self.static_map = StaticDispatcher()
+		self.static_map = StaticDispatcher(self)
 		self._template_dir = template_dir
 		self.path = os.path.dirname(os.path.abspath(sys.argv[0]))
 		self.routes = routes
@@ -156,21 +156,20 @@ class App(Singleton):
 		return (status, headers, response_body)
 
 	def __call__(self, environ, start_response):
-		# debug mode gets set to true if start_http() is used.
-		#if self.debug:
-		#	status, headers, response_body = self._dispatch(environ)
-		#else:
 		try:
 			status, headers, response_body = self._dispatch(environ)
 		except HTTPError, e:
 			status, headers, response_body = e.render(self)
 
+		# Need to do something more elegant to handle generators/chunked encoding...
+		# Also need to come up with a better way to log chunked encodings
 		if type(response_body) is types.GeneratorType:
-			headers['Transfer-Encoding'] = 'chunked'
 			start_response(status, headers.items())
+			response_length = 0
 			for i in response_body:
-				yield "%0X\r\n%s\r\n" % (len(i), i)
-			yield "0\r\n\r\n"
+				yield i
+				response_length += len(i)
+			logger.log_request(self.request, status, headers, response_length)
 
 		else:
 			# Apply post processors
@@ -183,7 +182,7 @@ class App(Singleton):
 			# Deliver the goods
 			start_response(status, headers.items())
 			yield response_body
-			logger.log_request(self.request, status, headers, response_body)
+			logger.log_request(self.request, status, headers, len(response_body))
 			
 	def _prep_start(self):
 		"""
@@ -208,12 +207,14 @@ class App(Singleton):
 		from flup.server.fcgi import WSGIServer
 		
 		self._prep_start()
+		self.server_type = 'fcgi'
 		logger.log_info("Starting FLUP WSGI Server...")
 		WSGIServer(self, *args, **kwargs).run()
 
 	def start_http(self, host='127.0.0.1', port=8080, *args, **kwargs):
 		from frame.server.http import HTTPServer
 		
+		self.server_type = 'http'
 		self._prep_start()
 		logger.log_info("Starting Frame HTTP Server on %s:%s..." % (host, port))
 		HTTPServer(self, host=host, port=port, *args, **kwargs).run()
