@@ -1,60 +1,76 @@
 import threading
 import sys
-import hashlib
 import time
 import datetime
 import os
+from frame import logger
 
 
 class ModuleMonitor(threading.Thread):
-	def __init__(self, server, hash_algorithm=hashlib.sha1, interval=1):
+	'''
+	Monitors all of the modules loaded by the current running application. If
+	any of them change (detected via os.stat), reload the running process.
+	'''
+	def __init__(self, server, interval=1):
 		self.server = server
-		self.hash_algorithm = hash_algorithm
 		self.interval = interval
 		self._stop = threading.Event()
+		
+		self.path = os.environ['_']
 
 		threading.Thread.__init__(self)
 
 	def run(self):
+		logger.log_info("Starting module reloader...")
 		datetime.datetime.now()
-		initial_hashes = self.hash_modules()
 		last_scan = datetime.datetime.now()
+		
+		old_stats = self.stat_modules()
 
 		while not self.stopped():
 			now = datetime.datetime.now()
 			delta = datetime.timedelta(seconds=self.interval)
 			if now > last_scan + delta:
-				module_hashes = self.hash_modules()
-				if initial_hashes != module_hashes:
-					initial_hashes = module_hashes
+				new_stats = self.stat_modules()
+				if not self.compare_stats(old_stats, new_stats):
+					logger.log_info("File changed, reloading server...")
+					self.server.stop()
+					old_stats = new_stats
+					os.execvpe(self.path, sys.argv, os.environ)
+				old_stats = new_stats
 			time.sleep(1)
 
 	def stopped(self):
 		return self._stop.is_set()
 
 	def stop(self):
+		logger.log_info("Stopping module reloader...")
 		self._stop.set()
-
-	def hash_modules(self):
-		mod_hash = self.hash_algorithm()
-		for value in sorted(sys.modules.values()):
-			if not value or not hasattr(value, '__file__'):
+		
+	def compare_stats(self, old, new):
+		'''
+		Returns true if the two stat dictionaries don't differ, false
+		if they do.
+		'''
+		for key, value in old.items():
+			if key in new and new[key] != value:
+				return False
+		return True
+		
+	def stat_modules(self):
+		stats = {}
+		for name, module in sys.modules.items():
+			try:
+				path = module.__file__
+			except AttributeError:
 				continue
-
-			mod_path = value.__file__
-			crud, extension = os.path.splitext(mod_path)
-			if extension == '.pyc':
-				source_path = mod_path[0:-1]
-			else:
-				continue
-
-			if not os.path.exists(source_path):
-				continue
-
-			with open(source_path, 'r') as f:
-				data = f.read(1024)
-				while data:
-					mod_hash.update(data)
-					data = f.read(1024)
-
-		return mod_hash.hexdigest()
+			
+			stats[path] = os.stat(path)
+			
+			try:
+				path = path[:-1]
+				stats[path] = os.stat(path)
+			except EnvironmentError:
+				pass
+			
+		return stats

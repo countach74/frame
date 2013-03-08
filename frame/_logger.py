@@ -29,24 +29,26 @@ class Logger(object):
 			referer = request.headers.referer
 		else:
 			referer = '-'
+			
+		headers = request.headers
 		
 		return {
-			'remote_host': request.headers.remote_addr,
+			'remote_host': headers.remote_addr if 'remote_addr' in headers else '-',
 			'timestamp': timestamp,
 			'request_line': "%s %s %s" % (
-				request.headers.request_method,
-				request.headers.request_uri,
-				request.headers.server_protocol),
+				headers.request_method if 'request_method' in headers else '-',
+				headers.request_uri if 'request_uri' in headers else '-',
+				headers.server_protocol if 'server_protocol' in headers else '-'),
 			'status_code': status_code,
 			'body_size': len(response_body),
-			'local_address': request.headers.server_addr,
+			'local_address': headers.server_addr if 'server_addr' in headers else '-',
 			'environment': request.environ,
-			'request_protocol': request.headers.server_protocol,
-			'request_method': request.headers.request_method,
-			'server_port': request.headers.server_port,
-			'query_string': request.headers.query_string,
-			'request_uri': request.headers.request_uri,
-			'server_name': request.headers.server_name,
+			'request_protocol': headers.server_protocol if 'server_protocol' in headers else '-',
+			'request_method': headers.request_method if 'request_method' in headers else '-',
+			'server_port': headers.server_port if 'server_port' in headers else '-',
+			'query_string': headers.query_string if 'query_string' in headers else '-',
+			'request_uri': headers.request_uri if 'request_uri' in headers else '-',
+			'server_name': headers.server_name if 'server_name' in headers else '-',
 			'user_agent': user_agent,
 			'referer': referer
 		}

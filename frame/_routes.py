@@ -1,10 +1,10 @@
 import re
 from routes import Mapper
 from uuid import uuid4
-from util import make_resource
+from util import make_resource, Singleton
 
 
-class Routes(object):
+class Routes(Singleton):
 	def __init__(self):
 		self.mapper = Mapper()
 		self.controllers = {}

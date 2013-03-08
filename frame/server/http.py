@@ -153,7 +153,7 @@ class Connection(object):
 
 
 class HTTPServer(object):
-	def __init__(self, app, host='localhost', port=8080, listen=5, max_read=8092, auto_reload=False):
+	def __init__(self, app, host='localhost', port=8080, listen=5, max_read=8092, auto_reload=True):
 		self.app = app
 		self.host = host
 		self.port = port
@@ -196,7 +196,10 @@ class HTTPServer(object):
 	def run(self):
 		self.bind_socket()
 		self.setup_signal_handlers()
-
+		
+		if self.auto_reload:
+			self.module_monitor.start()
+		
 		while self.running:
 			try:
 				r_ready, w_ready, e_ready = select.select(self.r_list, self.w_list, self.e_list)

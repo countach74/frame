@@ -105,3 +105,16 @@ class FileLogger(object):
 				f.write(data)
 		finally:
 			self.lock.release()
+			
+			
+class Singleton(object):
+	"""
+	A simple mixin to make a class behave like a Singleton.
+	"""
+	__instance = None
+	
+	def __new__(cls, *args, **kwargs):
+		if not cls.__instance:
+			cls.__instance = object.__new__(cls, *args, **kwargs)
+		
+		return cls.__instance

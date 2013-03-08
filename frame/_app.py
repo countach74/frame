@@ -32,10 +32,10 @@ from _config import config
 
 # Import logger
 from _logger import logger
-from util import truncate
+from util import truncate, Singleton
 
 
-class App(object):
+class App(Singleton):
 	def __init__(self, template_dir='templates', debug=True):
 		self.static_map = StaticDispatcher()
 		self._template_dir = template_dir
@@ -65,7 +65,7 @@ class App(object):
 		forms.BasicForm._environment = self.environment
 		orm.datatypes.CustomType._environment = self.environment
 		self.orm_drivers = orm.available_drivers
-
+		
 	@property
 	def template_dir(self):
 		return self._template_dir

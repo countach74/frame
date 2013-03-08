@@ -11,7 +11,7 @@ __app_name = sys.argv[0]
 # Setup default config
 config = TreeDict({
 	'sessions': {
-		'driver': 'file',
+		'driver': 'memory',
 		'cookie_name': 'FrameSession',
 		'expires': 168,
 		'cleanup_frequency': 30,
