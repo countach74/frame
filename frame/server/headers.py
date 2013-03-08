@@ -19,7 +19,7 @@ class Headers(object):
 	def __iter__(self):
 		for i in self._data:
 			yield i
-
+			
 	def _format_key(self, key):
 		return key.replace("-", "_").upper()
 
@@ -31,7 +31,7 @@ class Headers(object):
 
 
 class RequestHeaders(Headers, RequestMixin):
-	__request_pattern = re.compile("([a-zA-Z0-9\-]+):\s+(.*?)\r\n", re.M)
+	__request_pattern = re.compile("([a-zA-Z0-9\-]+):\s+(.*?)\r\n")
 
 	def _parse(self, request):
 		result = {}
@@ -40,14 +40,23 @@ class RequestHeaders(Headers, RequestMixin):
 		for k, v in data:
 			result["HTTP_%s" % self._format_key(k)] = v
 		return result
+		
+	def __repr__(self):
+		return "<RequestHeaders(%s)>" % self._data
 
 
 class RequestLine(Headers, RequestMixin):
 	__request_line_pattern = re.compile("^([A-Z]+) ([\S]+) HTTP/([0-1\.]+)\r\n")
+	
+	def __repr__(self):
+		return "<RequestLine('%s')>" % self._request
 
 	def _parse(self, request):
 		match = re.match(self.__request_line_pattern, request)
 
+		if not match:
+			raise ValueError("Invalid request line.")
+			
 		uri_split = match.group(2).split('?', 1)
 		path_info = uri_split[0]
 		query_string = uri_split[1] if len(uri_split) > 1 else ''

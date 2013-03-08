@@ -219,13 +219,5 @@ class App(Singleton):
 		logger.log_info("Starting Frame HTTP Server on %s:%s..." % (host, port))
 		HTTPServer(self, host=host, port=port, *args, **kwargs).run()
 
-	def start_wsgi(self, host='127.0.0.1', port=8080, *args, **kwargs):
-		from wsgiref.simple_server import make_server
-		
-		self._prep_start()
-		httpd = make_server(host, port, self, *args, **kwargs)
-		logger.log_info("Starting Python WSGI Server...")
-		httpd.serve_forever()
-
 
 app = App()

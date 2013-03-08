@@ -69,8 +69,8 @@ class Connection(object):
 			return
 
 		request_body = parse_body(request)
-
 		request_headers = RequestHeaders(request)
+		
 		wsgi_environ = {
 			'wsgi.multiprocess': False,
 			'wsgi.url_scheme': 'http',
@@ -81,7 +81,11 @@ class Connection(object):
 			'wsgi.errors': ''
 		}
 
-		uri_headers = RequestLine(request)
+		try:
+			uri_headers = RequestLine(request)
+		except ValueError:
+			self.close()
+			return
 
 		other_headers = {
 			'SERVER_ADDR': self.server.host,
