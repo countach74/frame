@@ -92,7 +92,7 @@ class App(Singleton):
 	def _dispatch(self, environ):
 		self.request = Request(environ)
 		
-		if config['application.strip_trailing_slash']:
+		if config['application.strip_trailing_slash'] and environ['PATH_INFO'] != '/':
 			environ['PATH_INFO'] = environ.get('PATH_INFO', '').rstrip('/')
 
 		try:
