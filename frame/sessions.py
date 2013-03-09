@@ -17,8 +17,8 @@ class Session(object):
 		self.interface = interface
 
 		# Create session cookie if it does not already exist
-		key_name = config['sessions.cookie_name']
-		expires = config['sessions.expires']
+		key_name = config.sessions.cookie_name
+		expires = config.sessions.expires
 
 		self.init()
 
@@ -54,7 +54,7 @@ class Session(object):
 
 	def get_expiration(self):
 		now = datetime.datetime.utcnow()
-		delta = datetime.timedelta(hours=config['sessions.expires'])
+		delta = datetime.timedelta(hours=config.sessions.expires)
 		return now + delta
 
 	@classmethod
@@ -95,15 +95,15 @@ class MysqlSession(Session):
 	
 	@property
 	def __connection(self):
-		return config['sessions.mysql.connection']
+		return config.sessions.mysql.connection
 		
 	@__connection.setter
 	def __connection(self, value):
-		config['sessions.mysql.connection'] = value
+		config.sessions.mysql.connection = value
 			
 	def __init__(self, *args, **kwargs):
 		if not self.__connection:
-			settings = config['sessions']['mysql']
+			settings = config.sessions.mysql
 			
 			required_fields = (
 				'database',
@@ -128,7 +128,7 @@ class MysqlSession(Session):
 				
 	def load(self, key):
 		self.__lock.acquire()
-		table = config['sessions.mysql.table']
+		table = config.sessions.mysql.table
 		cursor = self.__connection.cursor()
 		
 		cursor.execute("select data from %s where session_id=%%s limit 1" % table, key)
@@ -143,7 +143,7 @@ class MysqlSession(Session):
 		
 	def save(self, key, data):
 		self.__lock.acquire()
-		table = config['sessions.mysql.table']
+		table = config.sessions.mysql.table
 		cursor = self.__connection.cursor()
 		expiration = self.get_expiration()
 		pickled_data = pickle.dumps(data)
@@ -158,7 +158,7 @@ class MysqlSession(Session):
 	def expire(self, key):
 		self.__lock.acquire()
 		cursor = self.__connection.cursor()
-		table = config['sessions.mysql.table']
+		table = config.sessions.mysql.table
 		
 		cursor.execute("delete from %s where session_id = %%s" % table,
 			key)
@@ -168,12 +168,12 @@ class MysqlSession(Session):
 			
 	def cleanup_sessions(self):
 		now = datetime.datetime.now()
-		threshold = self.__last_cleanup + datetime.timedelta(minutes=config['sessions.cleanup_frequency'])
+		threshold = self.__last_cleanup + datetime.timedelta(minutes=config.sessions.cleanup_frequency)
 		
 		if now > threshold:
 			self.__lock.acquire()
 			self.__last_cleanup = datetime.datetime.utcnow()
-			table = config['sessions.mysql.table']
+			table = config.sessions.mysql.table
 			cursor = self.__connection.cursor()
 			now = datetime.datetime.now()
 		
@@ -188,7 +188,7 @@ class FileSession(Session):
 	last_cleanup = datetime.datetime.utcnow()
 	
 	def get_path(self, key):
-		return os.path.join(config['sessions.file.directory'], key)
+		return os.path.join(config.sessions.file.directory, key)
 	
 	def load(self, key):
 		self.__lock.acquire()
@@ -235,10 +235,10 @@ class FileSession(Session):
 		self.__lock.release()
 		
 	def cleanup_sessions(self):
-		session_path = config['sessions.file.directory']
+		session_path = config.sessions.file.directory
 		now = datetime.datetime.utcnow()
 		threshold = FileSession.last_cleanup + datetime.timedelta(
-			minutes=config['sessions.cleanup_frequency'])
+			minutes=config.sessions.cleanup_frequency)
 			
 		if now > threshold:
 			FileSession.last_cleanup = datetime.datetime.utcnow()
@@ -297,7 +297,7 @@ class MemorySession(Session):
 	def cleanup_sessions(self):
 		now = datetime.datetime.utcnow()
 		threshold = MemorySession.last_cleanup + datetime.timedelta(
-			minutes=config['sessions.cleanup_frequency'])
+			minutes=config.sessions.cleanup_frequency)
 			
 		if now > threshold:
 			logger.log_info("Starting session cleanup...")
@@ -337,11 +337,11 @@ class MemcacheSession(Session):
 	
 	@property
 	def db(self):
-		return config['sessions.memcache.connection']
+		return config.sessions.memcache.connection
 		
 	@db.setter
 	def db(self, value):
-		config['sessions.memcache.connection'] = value
+		config.sessions.memcache.connection = value
 
 	def save(self, key, data):
 		expiration = self.time.mktime(self.get_expiration().timetuple())
@@ -357,7 +357,7 @@ class SessionInterface(object):
 
 	@property
 	def backend(self):
-		return globals()[config['sessions.driver'].title() + 'Session']
+		return globals()[config.sessions.driver.title() + 'Session']
 
 	def get_session(self):
 		try:

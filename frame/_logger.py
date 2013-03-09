@@ -8,7 +8,7 @@ import os
 class Logger(object):
 	def populate_format_data(self, request, status, headers, response_length):
 		now = datetime.datetime.now()
-		local_tz = timezone(config['timezone'])
+		local_tz = timezone(config.timezone)
 		
 		dt_aware = local_tz.localize(now)
 		
@@ -99,7 +99,7 @@ class ProductionLogger(Logger):
 	
 	def __init__(self, facility, out, err):
 		facility = getattr(self.syslog, 'LOG_%s' % facility.upper())
-		self.syslog.openlog(config['application.name'], 0, facility)
+		self.syslog.openlog(config.application.name, 0, facility)
 		self.out = out
 		self.err = err
 		
@@ -128,8 +128,8 @@ class LogInterface(object):
 		
 	def setup_logger(self):
 		if not self.logger:
-			driver = config['logger.driver']
-			options = config['logger'][driver]
+			driver = config.logger.driver
+			options = config.logger[driver]
 			self.logger = globals()[driver.title() + 'Logger'](**options)
 			
 	def __getattr__(self, key):

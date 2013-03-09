@@ -1,6 +1,6 @@
 class DotDict(dict):
-	def __init__(self, data):
-		new_data = dict(data)
+	def __init__(self, data=None):
+		new_data = dict(data) if data else {}
 		
 		for k, v in new_data.iteritems():
 			if isinstance(v, dict):

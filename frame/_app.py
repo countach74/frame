@@ -198,7 +198,7 @@ class App(Singleton):
 		for i in config.post_processors:
 			self.post_processors.append(getattr(postprocessors, i))
 
-		for mapping, path in config['static_map'].items():
+		for mapping, path in config.static_map.items():
 			logger.log_info("Mapping static directory: '%s' => '%s'" % (
 				mapping, truncate(path, 40)))
 			self.static_map[mapping] = path
