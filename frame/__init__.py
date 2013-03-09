@@ -28,8 +28,8 @@ Frame's methodology facilitates creating very large applications as well.
 
 10,000 Feet
 -----------
-Most everything in Frame is all centered around the :mod:`frame._app.App`, which is a :mod:`frame.util.Singleton`
-instantiated at at :mod:`frame.app`
+Most everything in Frame is centered around the :mod:`frame._app.App`, which is a :mod:`frame.util.Singleton`
+instantiated at :mod:`frame.app`
 
 '''
 

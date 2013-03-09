@@ -1,5 +1,5 @@
 import pickle
-from _dotdict import DotDict
+from dotdict import DotDict
 from errors import SessionLoadError, SessionSaveError
 import datetime
 from uuid import uuid4

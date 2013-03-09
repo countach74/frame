@@ -1,4 +1,4 @@
-from _dotdict import DotDict
+from dotdict import DotDict
 from _routes import routes
 
 

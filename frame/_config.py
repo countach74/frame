@@ -1,4 +1,4 @@
-from treedict import TreeDict
+from dotdict import DotDict
 import sys
 import os
 
@@ -9,7 +9,7 @@ __app_name = sys.argv[0]
 
 
 # Setup default config
-config = TreeDict({
+config = DotDict({
 	'sessions': {
 		'driver': 'memory',
 		'cookie_name': 'FrameSession',

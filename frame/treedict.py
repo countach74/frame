@@ -28,6 +28,15 @@ class TreeDict(dict):
 	def _refresh(self):
 		self.data = self._prepare(self.original_data, {})
 		
+	def _walk_items(self, key):
+		indexes = key.split('.')
+		last_item = self.original_data
+		
+		for i in indexes:
+			last_item = last_item[i]
+			
+		return last_item
+		
 	def __setitem__(self, key, value):
 		path = key.split('.')
 		last_item = self.original_data
@@ -41,15 +50,13 @@ class TreeDict(dict):
 		self._refresh()
 	
 	def __getitem__(self, key):
-		try:
-			return self.data[key]
-		except KeyError, e:
-			return self.original_data[key]
+		self._refresh()
+		return self._walk_items(key)
 		
 	def __delitem__(self, key):
 		del(self.original_data[key])
 		self._refresh()
-	
+		
 	def __repr__(self):
 		return str(self.data)
 		

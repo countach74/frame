@@ -1,6 +1,12 @@
 class DotDict(dict):
-	def __init__(self, *args, **kwargs):
-		dict.__init__(self, *args, **kwargs)
+	def __init__(self, data):
+		new_data = dict(data)
+		
+		for k, v in new_data.iteritems():
+			if isinstance(v, dict):
+				new_data[k] = DotDict(v)
+		
+		dict.__init__(self, new_data)
 
 	def __getattr__(self, key):
 		try:

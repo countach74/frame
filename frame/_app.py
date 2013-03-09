@@ -1,7 +1,7 @@
 from _request import Request
 from _response import Response
 from _routes import routes
-from _dotdict import DotDict
+from dotdict import DotDict
 from errors import HTTPError, Error404, Error500
 import traceback
 from jinja2 import Environment, ChoiceLoader, PackageLoader, FileSystemLoader
@@ -79,7 +79,7 @@ class App(Singleton):
 
 	@property
 	def orm(self):
-		return self.orm_drivers[config['orm.driver']]
+		return self.orm_drivers[config.orm.driver]
 
 	@property
 	def Connection(self):
@@ -92,7 +92,7 @@ class App(Singleton):
 	def _dispatch(self, environ):
 		self.request = Request(environ)
 		
-		if config['application.strip_trailing_slash'] and environ['PATH_INFO'] != '/':
+		if config.application.strip_trailing_slash and environ['PATH_INFO'] != '/':
 			environ['PATH_INFO'] = environ.get('PATH_INFO', '').rstrip('/')
 
 		try:
@@ -192,10 +192,10 @@ class App(Singleton):
 		import preprocessors
 		import postprocessors
 		
-		for i in config['pre_processors']:
+		for i in config.pre_processors:
 			self.pre_processors.append(getattr(preprocessors, i))
 		
-		for i in config['post_processors']:
+		for i in config.post_processors:
 			self.post_processors.append(getattr(postprocessors, i))
 
 		for mapping, path in config['static_map'].items():
