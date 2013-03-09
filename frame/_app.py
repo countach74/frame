@@ -1,5 +1,5 @@
-from _request import Request
-from _response import Response
+from request import Request
+from response import Response
 from _routes import routes
 from dotdict import DotDict
 from errors import HTTPError, Error404, Error500
