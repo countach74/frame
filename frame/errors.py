@@ -1,3 +1,12 @@
+'''
+Defines all of the Frame exception types. Anything derrived from HTTPError is expected
+to be some sort of HTTPError (301, 404, 500, etc). Under the current implementation,
+overriding the default behavior of these errors is difficult (but not impossible). However,
+modifying the template for the errors is very simple. See
+:ref:`overriding-error-templates`
+'''
+
+
 import sys, os
 from cgi import escape
 from _logger import logger

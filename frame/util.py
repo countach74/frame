@@ -139,8 +139,8 @@ class FileLogger(object):
 	A thread-safe file logging tool. This is intended to be used as a target
 	for the stdout logger. It can be configured like so::
 	
-		frame.config['logger.stdout.out'] = FileLogger('/tmp/framelog.out')
-		frame.config['logger.stdout.err'] = FileLogger('/tmp/framelog.err')
+		frame.config.logger.stdout.out = FileLogger('/tmp/framelog.out')
+		frame.config.logger.stdout.err = FileLogger('/tmp/framelog.err')
 		
 	`Caution`: Make sure that the application user has appropriate permissions
 		to write to the file. Since you're redirecting logging output, any trouble

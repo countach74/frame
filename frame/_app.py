@@ -213,7 +213,7 @@ class App(Singleton):
 			for i in response_body:
 				yield i
 				response_length += len(i)
-			logger.log_request(self.request, status, headers, response_length)
+			logger.log_request(self.request, self.response, response_length)
 
 		else:
 			# Apply post processors
@@ -226,7 +226,7 @@ class App(Singleton):
 			# Deliver the goods
 			start_response(status, headers.items())
 			yield response_body
-			logger.log_request(self.request, status, headers, len(response_body))
+			logger.log_request(self.request, self.response, len(response_body))
 			
 	def _prep_start(self):
 		'''

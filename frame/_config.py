@@ -67,6 +67,3 @@ config = DotDict({
 		'/static/frame': os.path.join(__frame_path, 'static')
 	}
 })
-'''
-Global Frame configuration.
-'''
