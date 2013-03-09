@@ -41,3 +41,7 @@ class Controller(object):
 	@property
 	def session(self):
 		return app.session
+		
+	@property
+	def uri(self):
+		return self.request.headers.path_info.strip('/').split('/')

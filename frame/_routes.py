@@ -2,6 +2,7 @@ import re
 from routes import Mapper
 from uuid import uuid4
 from util import make_resource, Singleton
+from _logger import logger
 
 
 class Routes(Singleton):
@@ -9,15 +10,30 @@ class Routes(Singleton):
 		self.mapper = Mapper()
 		self.controllers = {}
 		self.resources = {}
-
+		
+	'''
+	def __call__(self, route, *args, **kwargs):
+		def wrap(f):
+			#controller = f.im_class
+			self.connect(route, action=f, *args, **kwargs)
+			def wrapped_f(*args2, **kwargs2):
+				return f(*args, **kwargs)
+			return wrapped_f
+		return wrap
+	'''
+		
 	def register_controller(self, controller):
 		self.controllers[controller.__class__.__name__.lower()] = controller()
 
 	def match(self, *args, **kwargs):
 		match = self.mapper.match(*args, **kwargs)
 		if match:
-			controller = self.controllers[match['controller']]
-			action = getattr(controller, match['action'])
+			if not hasattr(match['action'], '__call__'):
+				controller = self.controllers[match['controller']]
+				action = getattr(controller, match['action'])
+			else:
+				action = match['action']
+				controller = None
 			self.current_controller = controller
 			self.current_action = action
 			return (action, match)

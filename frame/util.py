@@ -1,7 +1,7 @@
-"""
+'''
 Some simple utilities to help out with everyday operations. Some of these
 are used internally by Frame; some are designed to be used by web developers.
-"""
+'''
 
 
 import re
@@ -10,11 +10,42 @@ from threading import RLock
 
 
 class Decorator(object):
+	'''
+	Simple mixin to aid in making decorators.
+	'''
+	
 	def __get__(self, instance, parent=None):
 		return types.MethodType(self, instance)
 		
 		
 class Authorization(Decorator):
+	'''
+	Simple class to facilitate access control. Designed to be subclassed; not
+	complete by itself, this is really more of a mixin.
+	
+	Here is a simple example::
+	
+		class Auth(Authorization):
+			def authorize(self, f, *args, **kwargs):
+				user_groups = frame.app.session['user']
+				
+				if 'user' in frame.app.session and any((i in self.groups for i in user_groups)):
+					# Allow access
+					return f(*args, **kwargs)
+					
+				else:
+					# Deny access
+					frame.app.current_controller.redirect('/login')
+					
+					
+	Now, to use our Auth class, we just decorate a controller method with it, like so::
+	
+		class Admin(frame.Controller):
+			@Auth(groups=['admin', 'dev'])   # Only let 'admin' and 'dev' users through
+			def index(self):
+				return 'admin area'
+	'''
+	
 	def __init__(self, groups=[], users=[]):
 		self.groups = groups
 		self.users = users
@@ -27,6 +58,13 @@ class Authorization(Decorator):
 		auth.__name__ = f.__name__
 		
 		return auth
+		
+	def authorize(self, f, *args, **kwargs):
+		'''
+		Override this method to do authorization checks and return the appropriate
+		data, depending on user/group access permissions.
+		'''
+		pass
 
 
 def parse_query_string(string):
@@ -79,6 +117,15 @@ def make_resource(controller, path):
 
 
 def truncate(text, length=30):
+	'''
+	Truncate text. Really long text becomes::
+	
+		This is...long text
+		
+	:param text: String to truncate
+	:param length: Maximum length to allow before truncating
+	:return: Truncated string
+	'''
 	if len(text) > length:
 		first_half = text[0:length/2]
 		second_half = text[-length/2:]
@@ -88,7 +135,25 @@ def truncate(text, length=30):
 
 
 class FileLogger(object):
+	'''
+	A thread-safe file logging tool. This is intended to be used as a target
+	for the stdout logger. It can be configured like so::
+	
+		frame.config['logger.stdout.out'] = FileLogger('/tmp/framelog.out')
+		frame.config['logger.stdout.err'] = FileLogger('/tmp/framelog.err')
+		
+	`Caution`: Make sure that the application user has appropriate permissions
+		to write to the file. Since you're redirecting logging output, any trouble
+		that is encountered may not be reported and logging won't work, so you
+		can end up in the dark.
+	'''
+	
 	def __init__(self, path):
+		'''
+		Initialize the FileLogger
+		
+		:param path: The file to log to. Must have write access to this file!
+		'''
 		self.path = path
 		self.lock = RLock()
 		
