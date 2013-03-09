@@ -33,6 +33,11 @@ class Connection(object):
 
 		self.read_buffer = []
 		self.write_buffer = []
+		
+		self.total_received = 0
+		self.request_body_received = 0
+		self.request_body_length = None
+		self.request_headers = None
 
 	def fileno(self):
 		return self.socket.fileno()
@@ -42,16 +47,38 @@ class Connection(object):
 
 	def handle_read(self):
 		try:
-			request = self.socket.recv(self.server.max_read)
+			data = self.socket.recv(self.server.chunk_size)
 		except socket.error:
 			self.close()
 			return
+			
+		self.total_received += len(data)
+		self.read_buffer.append(data)
+		last_two_chunks = ''.join(self.read_buffer[-2:])
 		
-		if not request:
-			self.close()
-			return
-		
-		self.handle_request(request)
+		if '\r\n\r\n' in last_two_chunks and not self.request_headers:
+			raw_request = ''.join(self.read_buffer).split('\r\n\r\n', 1)
+			self.request_body_received += len(raw_request[1])
+			self.request_headers = RequestHeaders(raw_request[0])
+			
+			try:
+				self.request_body_length = int(self.request_headers['HTTP_CONTENT_LENGTH'])
+			except (KeyError, ValueError):
+				self.request_body_length = 0
+			finally:
+				if self.request_body_received >= self.request_body_length:
+					if self in self.server.r_list:
+						self.server.r_list.remove(self)
+					request = ''.join(self.read_buffer)
+					self.handle_request(request)
+					
+		elif self.request_headers:
+			self.request_body_received += len(data)
+			if self.request_body_received >= self.request_body_length:
+				if self in self.server.r_list:
+					self.server.r_list.remove(self)
+				request = ''.join(self.read_buffer)
+				self.handle_request(request)
 
 	def handle_write(self):
 		data = self.write_buffer.pop(0)
@@ -69,7 +96,6 @@ class Connection(object):
 			return
 
 		request_body = parse_body(request)
-		request_headers = RequestHeaders(request)
 		
 		wsgi_environ = {
 			'wsgi.multiprocess': False,
@@ -103,7 +129,7 @@ class Connection(object):
 			'REDIRECT_STATUS': 200
 		}
 
-		all_headers = dict(request_headers.items() + wsgi_environ.items() +
+		all_headers = dict(self.request_headers.items() + wsgi_environ.items() +
 			other_headers.items() + uri_headers.items())
 
 		try:
@@ -160,7 +186,7 @@ class Connection(object):
 
 
 class HTTPServer(object):
-	def __init__(self, app, host='localhost', port=8080, listen=5, max_read=8092, chunk_size=4096, auto_reload=True):
+	def __init__(self, app, host='localhost', port=8080, listen=5, max_read=8092, chunk_size=1024, auto_reload=True):
 		self.app = app
 		self.host = host
 		self.port = port
