@@ -317,7 +317,10 @@ class MemcacheSession(Session):
 	prefix = 'FRAME_SESSION::'
 	
 	def init(self):
-		import memcache
+		try:
+			import memcache
+		except ImportError:
+			raise ImportError("Memcache sessions unavailable; cannot find 'memcache' module")
 
 		if not self.db:
 			self.db = memcache.Client(['127.0.0.1:11211'])
