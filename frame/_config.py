@@ -8,7 +8,6 @@ __frame_path = os.path.dirname(os.path.abspath(__file__))
 __app_name = sys.argv[0]
 
 
-# Setup default config
 config = DotDict({
 	'sessions': {
 		'driver': 'memory',
@@ -68,3 +67,6 @@ config = DotDict({
 		'/static/frame': os.path.join(__frame_path, 'static')
 	}
 })
+'''
+Global Frame configuration.
+'''

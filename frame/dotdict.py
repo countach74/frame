@@ -1,4 +1,11 @@
 class DotDict(dict):
+	'''
+	A simple subclass of :class:`dict` that allows for dot-notation access of all elements.
+	This is used rather extensively through Frame to make it easier to access nested items.
+	For example, request header data, response header data, and config directives are allow
+	stored using this class.
+	'''
+	
 	def __init__(self, data=None):
 		new_data = dict(data) if data else {}
 		

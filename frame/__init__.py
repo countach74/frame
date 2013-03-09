@@ -7,7 +7,6 @@ deployment method.
 
 Hello World
 -----------
-
 Creating your first Frame application is very easy! Check out this hello world::
 
 	import frame
@@ -26,11 +25,20 @@ Creating your first Frame application is very easy! Check out this hello world::
 ... and that's it! And, unlike many other frameworks that get you out of the gate fast,
 Frame's methodology facilitates creating very large applications as well.
 
-10,000 Feet
------------
-Most everything in Frame is centered around the :mod:`frame._app.App`, which is a :mod:`frame.util.Singleton`
-instantiated at :mod:`frame.app`
+The Basics
+----------
+Frame combines the Python Routes module and Jinja2 template engine to create a
+comprehensive web developmeng framework. At this time, there isn't really a way to
+change the dispatching to use something other than Routes, but this functionality may
+be added in the future at some time. Also, just because it's assumed that you'll use
+Jinja2, this is not required (although certain automated functionality will be lost).
 
+Like many MVC-oriented frameworks, controllers in Frame contain a lot of central
+information to the HTTP request and response. For example, :mod:`frame.request.Request`
+and :mod:`frame.response.Response` are both available directly from within the
+Controller. The goal is that most everything you'll need to interact with Frame
+on a normal use-case are available from directly within the
+:mod:`frame.controller.Controller`.
 '''
 
 
