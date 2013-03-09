@@ -88,11 +88,6 @@ class MysqlSession(Session):
 	__last_cleanup = datetime.datetime.utcnow()
 	__lock = RLock()
 	
-	try:
-		import MySQLdb as __mysql
-	except ImportError:
-		raise ImportError("Could not use mysql session backend: MySQLdb module not found.")
-	
 	@property
 	def __connection(self):
 		return config.sessions.mysql.connection
@@ -102,6 +97,11 @@ class MysqlSession(Session):
 		config.sessions.mysql.connection = value
 			
 	def __init__(self, *args, **kwargs):
+		try:
+			import MySQLdb as __mysql
+		except ImportError:
+			raise ImportError("Could not use mysql session backend: MySQLdb module not found.")
+		
 		if not self.__connection:
 			settings = config.sessions.mysql
 			
@@ -116,7 +116,7 @@ class MysqlSession(Session):
 				raise StandardError("Could not setup MySQL connection. The following configuration "
 					"options must be set: %s" % ', '.join(required_fields))
 			else:
-				self.__connection = self.__mysql.Connection(
+				self.__connection = __mysql.Connection(
 					host=settings['host'],
 					port=settings['port'],
 					user=settings['user'],
@@ -313,15 +313,14 @@ class MemorySession(Session):
 
 
 class MemcacheSession(Session):
-	import memcache
 	import time
 	prefix = 'FRAME_SESSION::'
-
+	
 	def init(self):
 		import memcache
 
 		if not self.db:
-			self.db = self.memcache.Client(['127.0.0.1:11211'])
+			self.db = memcache.Client(['127.0.0.1:11211'])
 
 	def load(self, key):
 		import pickle

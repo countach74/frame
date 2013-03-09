@@ -77,8 +77,11 @@ class Logger(object):
 	def log_critical(self, message):
 		self.log_message('CRIT', message)
 		
-	def log_exception(self, message):
-		self.log_critical(message)
+	def log_exception(self, message, raw=False):
+		if not raw:
+			self.log_critical(message)
+		else:
+			self.err.write("%s\n" % message.rstrip())
 
 		
 class StdoutLogger(Logger):

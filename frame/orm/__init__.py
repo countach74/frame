@@ -18,10 +18,10 @@ sys.path.append(__dirname)
 for i in os.listdir(os.path.join(__dirname, 'drivers')):
 	st = os.stat(os.path.join(__dirname, 'drivers', i))
 	if stat.S_ISDIR(st.st_mode):
-		#try:
+		try:
 			available_drivers[i] = import_module('drivers.%s' % i)
-		#except ImportError, e:
-		#	sys.stdout.write("Could not import ORM driver '%s': %s\n" % (i, e))
+		except ImportError, e:
+			pass
 
 
 sys.path.remove(__dirname)

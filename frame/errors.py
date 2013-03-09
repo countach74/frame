@@ -102,8 +102,7 @@ class Error500(HTTPError):
 			tb = traceback.format_exception(e_type, e_value, e_tb)
 			self.parameters['traceback'] = map(escape, tb)
 			for line in tb:
-				sys.stderr.write(line)
-				logger.log_exception(line)
+				logger.log_exception(line, True)
 		else:
 			self.parameters['traceback'] = None
 

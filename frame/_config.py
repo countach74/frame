@@ -39,7 +39,7 @@ config = DotDict({
 	},
 	
 	'orm': {
-		'driver': 'mongo'
+		'driver': None
 	},
 	
 	'application': {
