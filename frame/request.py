@@ -3,16 +3,25 @@ from _routes import routes
 
 
 class Request(object):
+	'''
+	A simple parser for the WSGI environ dictionary.
+	
+	There really isn't much of interest here other than a handful of attributes that are
+	very useful. Note that :mod:`frame._app.App` instantiates this class; its objects are
+	made available in two locations: :attr:`frame._app.App.request` and
+	:attr:`frame.controller.Controller.request`.
+	'''
+	
 	def __init__(self, environ):
-		self.environ = environ
+		self.environ = environ   #: The WSGI environment
+		self.headers = DotDict()   #: Both FastCGI and HTTP headers
+		self.wsgi = DotDict()   #: The WSGI objects
+		
 		self.__parse(environ)
 		self.__body = None
-		self.cookies = self.__parse_cookies(environ)
+		self.cookies = self.__parse_cookies(environ)   #: Parsed cookies
 
 	def __parse(self, environ):
-		self.headers = DotDict()
-		self.wsgi = DotDict()
-
 		for key, value in environ.items():
 			if key.startswith('wsgi.'):
 				parsed_key = key.split('.', 1)[1]
@@ -41,6 +50,9 @@ class Request(object):
 
 	@property
 	def body(self):
+		'''
+		The request body
+		'''
 		if self.__body is None:
 			self.__body = self.wsgi.input.read()
 		return self.__body

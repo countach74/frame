@@ -215,7 +215,7 @@ class App(Singleton):
 		else:
 			# Apply post processors
 			for i in self.post_processors:
-				headers, response_body = i(self.request, headers, str(response_body))
+				response_body = i(self.request, self.response, str(response_body))
 
 			response_body = str(response_body)
 			headers['Content-Length'] = str(len(response_body))

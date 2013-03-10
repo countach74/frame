@@ -46,7 +46,7 @@ config = DotDict({
 		'strip_trailing_slash': True
 	},
 	
-	'pre_processors': ['form_url_encoder', 'form_json_encoder', 'form_multipart_encoder'],
+	'pre_processors': ['form_url_decoder', 'form_json_decoder', 'form_multipart_decoder'],
 	'post_processors': [],
 	'timezone': 'America/Los_Angeles',
 	'logger': {

@@ -4,7 +4,7 @@
 The server experienced an internal problem. In other words: You just totally broke everything.
 
 {% if app.debug and traceback %}
-	<pre>{%for i in traceback %}{{i}}{% endfor %}</pre>
+	<pre>{% for i in traceback %}{{i}}{% endfor %}</pre>
 {% endif %}
 
 {% endblock %}

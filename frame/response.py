@@ -7,6 +7,11 @@ import os
 
 
 class Response(object):
+	'''
+	The :class:`Response` class stores a collection of data about the HTTP response. It is
+	used by the :class:`frame._app.App` to deliver information to the client.
+	'''
+	
 	def __init__(self, app, controller):
 		if not controller:
 			raise Error404
