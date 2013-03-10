@@ -148,46 +148,41 @@ class App(Singleton):
 				if key in ('controller', 'action', 'method'):
 					del(data[key])
 
+			self.response = Response(self, match)
+			
 			try:
-				self.response = Response(self, match)
+				self.session = self.session_interface.get_session()
+			except Exception, e:
+				raise Error500
+
+			self.environment.globals['session'] = self.session
+			self.environment.globals['tools'] = self.toolset
+
+			# Cool trick to make 'session' available everywhere easily
+			sys.modules['session'] = self.session
+
+			for i in self.pre_processors:
+				i(self.request, self.response)
+				
+			def save_session():
+				try:
+					self.session_interface.save_session(self.session)
+				except Exception, e:
+					raise Error500
+
+			try:
+				response_body = self.response.render(self.request.headers.query_string, data)
 			except HTTPError, e:
-				status = e.status
-				headers = e.headers
-				response_body = e.body
-			else:
-				try:
-					self.session = self.session_interface.get_session()
-				except Exception, e:
-					raise Error500
-
-				self.environment.globals['session'] = self.session
-				self.environment.globals['tools'] = self.toolset
-
-				# Cool trick to make 'session' available everywhere easily
-				sys.modules['session'] = self.session
-
-				for i in self.pre_processors:
-					i(self.request, self.response)
-					
-				def save_session():
-					try:
-						self.session_interface.save_session(self.session)
-					except Exception, e:
-						raise Error500
-
-				try:
-					response_body = self.response.render(self.request.headers.query_string, data)
-				except HTTPError, e:
-					save_session()
-					raise e
-				except Exception, e:
-					raise Error500
-
-				# Save the session before yielding the response
 				save_session()
+				raise e
+			except Exception, e:
+				raise Error500
 
-				status = self.response.status
-				headers = self.response.headers
+			# Save the session before yielding the response
+			save_session()
+
+			status = self.response.status
+			headers = self.response.headers
 
 		return (status, headers, response_body)
 
@@ -203,7 +198,9 @@ class App(Singleton):
 		try:
 			status, headers, response_body = self._dispatch(environ)
 		except HTTPError, e:
-			status, headers, response_body = e.render(self)
+			response_body = e.render(self)
+			status = self.response.status
+			headers = self.response.headers
 
 		# Need to do something more elegant to handle generators/chunked encoding...
 		# Also need to come up with a better way to log chunked encodings

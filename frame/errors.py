@@ -10,6 +10,7 @@ modifying the template for the errors is very simple. See
 import sys, os
 from cgi import escape
 from _logger import logger
+from dotdict import DotDict
 
 
 _default_error_headers = {
@@ -20,100 +21,73 @@ _default_error_headers = {
 
 
 class HTTPError(Exception):
-	def __init__(self, template=None, headers=_default_error_headers):
-		self.template = template or 'errors/%s.html' % self.code
-		self.headers = headers
-		self.parameters = {}
-
-	def render(self, app):
-		self.app = app
-		return (
-			self.status,
-			self.headers,
-			app.environment.get_template('errors/%s.html' % self.code).render(**self.get_parameters()))
-
-	def get_parameters(self):
-		defaults = {
-			'message': self.message,
-			'status': self.status,
-			'code': self.code,
-			'app': self.app
-		}
-		return dict(defaults.items() + self.parameters.items())
-
-	@property
-	def status(self):
-		return "%s %s" % (self.code, self.message)
+	def __init__(self, status, headers={}, *args, **kwargs):
+		base_headers = DotDict(_default_error_headers)
+		base_headers.update(headers)
+			
+		self.args = args
+		self.kwargs = kwargs
 		
-
-# HTTP 3xx Errors
-class Error301(HTTPError):
-	def __init__(self, url, message='301 Moved Permanently', *args, **kwargs):
-		self.url = url
-		self.message = message
-		self.code = 301
-		HTTPError.__init__(self, *args, **kwargs)
-		
-		self.headers = dict(_default_error_headers)
-		self.headers.update({
-			'Location': self.url
+		self.response = DotDict({
+			'status': status,
+			'headers': base_headers
 		})
 		
 	def render(self, app):
-		self.app = app
-		return (
-			self.status,
-			self.headers,
-			None)
+		app.response = self.response
+		status_code = self.response.status.split(None, 1)[0]
+		template_path = 'errors/%s.html' % status_code
+		
+		return app.environment.get_template(template_path).render(
+			app=app, status=self.response.status, **self.kwargs)
 			
 			
-class Error302(Error301):
-	def __init__(self, url, message='302 Found', *args, **kwargs):
-		self.code = 302
-		Error301.__init__(self, url, message, *args, **kwargs)
-
-
+class Error301(HTTPError):
+	def __init__(self, url, status='301 Moved Permanently', *args, **kwargs):
+		headers = {'Location': url}
+		HTTPError.__init__(status, headers, *args, **kwargs)
+			
+			
+class Error302(HTTPError):
+	def __init__(self, url, status='302 Found', *args, **kwargs):
+		headers = {'Location': url}
+		HTTPError.__init__(status, headers, *args, **kwargs)
+		
+		
 class Error303(Error301):
 	pass
-
-
-# HTTP 4xx Errors
+		
+		
 class Error404(HTTPError):
-	def __init__(self, message="File Not Found", *args, **kwargs):
-		self.message = message
-		self.code = 404
-		HTTPError.__init__(self, *args, **kwargs)
-
-
-class Error401(Error404):
-	def __init__(self, message="Not Authorized", *args, **kwargs):
-		Error404.__init__(self, message, *args, **kwargs)
-		self.code = 401
-
-
-class Error403(Error404):
-	def __init__(self, message="Forbidden", *args, **kwargs):
-		Error404.__init__(self, message, *args, **kwargs)
-		self.code = 403
-
-
-# HTTP 5xx Errors
+	def __init__(self, status='404 File Not Found', *args, **kwargs):
+		HTTPError.__init__(self, status, *args, **kwargs)
+		
+		
+class Error401(HTTPError):
+	def __init__(self, status='401 Not Authorized', *args, **kwargs):
+		HTTPError.__init__(self, status, *args, **kwargs)
+		
+		
+class Error403(HTTPError):
+	def __init__(self, status='403 Forbidden', *args, **kwargs):
+		HTTPError.__init__(self, status, *args, **kwargs)
+		
+		
 class Error500(HTTPError):
-	def __init__(self, message="Internal Server Error", *args, **kwargs):
+	def __init__(self, status='500 Internal Server Error', *args, **kwargs):
 		import traceback
-
-		self.message = message
-		self.code = 500
-		HTTPError.__init__(self, *args, **kwargs)
-
+		new_kwargs = dict(kwargs)
+		
 		e_type, e_value, e_tb = sys.exc_info()
 		if e_tb:
 			tb = traceback.format_exception(e_type, e_value, e_tb)
-			self.parameters['traceback'] = map(escape, tb)
+			new_kwargs['traceback'] = map(escape, tb)
 			for line in tb:
 				logger.log_exception(line, True)
 		else:
-			self.parameters['traceback'] = None
+			new_kwargs['traceback'] = None
+			
+		HTTPError.__init__(self, status, *args, **new_kwargs)
 
 
 class SessionLoadError(Exception):
