@@ -7,7 +7,7 @@ from _logger import logger
 
 class Routes(Singleton):
 	'''
-	A wrapper around :mod:`routes.Mapper`. Allows for easily mapping URI patterns to a
+	A wrapper around :class:`routes.mapper.Mapper`. Allows for easily mapping URI patterns to a
 	given controller action. This is a :mod:`frame.util.Singleton` class and as such can
 	only be instantiated once (any subsequent instances will actually point to the same
 	object as the first).

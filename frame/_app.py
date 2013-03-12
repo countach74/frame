@@ -243,6 +243,11 @@ class App(Singleton):
 			logger.log_info("Mapping static directory: '%s' => '%s'" % (
 				mapping, truncate(path, 40)))
 			self.static_map[mapping] = path
+			
+	def daemonize(self, host='127.0.0.1', port=8080, ports=None, server_type='fcgi', *args, **kwargs):
+		from daemonize import daemonize
+		
+		daemonize(self, host, port, ports, server_type, *args, **kwargs)
 
 	def start_fcgi(self, *args, **kwargs):
 		'''
