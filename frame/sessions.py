@@ -1,3 +1,11 @@
+'''
+Frame allows for a variety of session backend storages. In fact, you can use pretty
+much anything you can dream up to store session data; if it's not here already, make
+it yourself--it's easy! If you are interested in creating your own session driver(s),
+please see :ref:`create_session_driver`.
+'''
+
+
 import pickle
 from dotdict import DotDict
 from errors import SessionLoadError, SessionSaveError
@@ -10,9 +18,34 @@ from _logger import logger
 
 
 class Session(object):
+	'''
+	The :class:`Session` class is the basic session interface that all session drivers
+	implement. In order for a driver to work, at a minimum, the :meth:`save` and
+	:meth:`load` methods must be implemented. In some cases, this may be adequate but more
+	than likely, you will want to also implement :meth:`expires` and
+	:meth:`cleanup_sessions`.
+	
+	Frame sessions are loaded at the beginning of a request and saved at the end of a
+	request. Drivers do not have to save session data each time it changes, but only once
+	at the end of the request and then it must save the entire dataset.
+	
+	*Note:* The session's data is stored at :attr:`_data`.
+	'''
+	
 	import random
 
 	def __init__(self, app, interface, force=False):
+		'''
+		Initializes the session. This should not be overridden. Instead, if you need a hook
+		into the session initialization, implement :meth:`init`.
+		
+		:param app: The Frame application
+		:param interface: The :class:`SessionInterface` that created the session
+		:param force: A boolean that specifies whether or not session creation should be
+			forced. Necessary when a client passes a session token that no longer exists
+			in the backend session storage
+		'''
+		
 		self._app = app
 		self.interface = interface
 
@@ -50,9 +83,21 @@ class Session(object):
 		self.cleanup_sessions()
 
 	def init(self):
+		'''
+		A hook that is called at session initialization. Use this if you need to perform any
+		operation on initialization. It is called after the Frame app and
+		:class:`SessionInterface` are saved to the session, but before any data is saved
+		or loaded.
+		'''
 		pass
 
 	def get_expiration(self):
+		'''
+		Returns a datetime object set to utcnow() + however many hours sessions are
+		configured to last (as specified at ``config.sessions.expires``).
+		
+		:return: Datetime object
+		'''
 		now = datetime.datetime.utcnow()
 		delta = datetime.timedelta(hours=config.sessions.expires)
 		return now + delta
@@ -74,14 +119,52 @@ class Session(object):
 		return ''.join(key)
 
 	def cleanup_sessions(self):
+		'''
+		Use to cleanup sessions.
+		
+		**NOTE**: This is called *every time a session is saved*. In order to not destroy
+		performance, the session driver must do a check to discover if it's really time to
+		run a session cleanup. Hopefully in the future, we will make this more elegant.
+		'''
 		pass
 
 	def remove(self):
+		'''
+		Calls the session's :meth:`expire` method and resets the stored data to an empty
+		dictionary.
+		'''
 		self.expire(self._key)
 		self._data = {}
 		
 	def commit(self):
+		'''
+		Force the session to save data, rather than wait for the end of request.
+		'''
 		self._save(self._key, self._data)
+		
+	def load(self, key):
+		'''
+		Fetch the session data for the requested key and return it as a dictionary. If the
+		key cannot be found, throw :exc:`frame.errors.SessionLoadError`. It is very
+		important that this exception is thrown if the key is not found. Do not leave
+		it out! :)
+		
+		:param key: A unique session key
+		:return: Session data as a dictionary
+		'''
+		pass
+	
+	def save(self, key, data):
+		'''
+		Save the session data with the given key. If the session cannot be saved, throw
+		:exc:`frame.errors.SessionSaveError`. Actually, throwing this error is not that
+		important (unlike throwing :exc:`frame.errors.SessionLoadError` in the
+		:meth:`load` method).
+		
+		:param key: A unique session key
+		:param data: The session data as a dictionary
+		'''
+		pass
 		
 		
 class MysqlSession(Session):
@@ -354,18 +437,39 @@ class MemcacheSession(Session):
 
 
 class SessionInterface(object):
-	def __init__(self, app, **kwargs):
+	'''
+	A simple interface that allows the session driver config directive to be set as a
+	string, rather than having to directly specify a class to base sessions off of.
+	'''
+	
+	def __init__(self, app):
+		'''
+		Initialize the interface.
+		
+		:param app: The Frame application
+		'''
 		self.app = app
 
 	@property
 	def backend(self):
+		'''
+		A property to make it less wordy to access the currently selected session driver.
+		'''
 		return globals()[config.sessions.driver.title() + 'Session']
 
 	def get_session(self):
+		'''
+		Fetch the user's session. If it does not exist, create a new one.
+		'''
 		try:
 			return self.backend(self.app, self)
 		except SessionLoadError:
 			return self.backend(self.app, self, force=True)
 
 	def save_session(self, session):
+		'''
+		Save the session.
+		
+		:param session: The :class:`Session` to save.
+		'''
 		session._save(session._key, session._data)

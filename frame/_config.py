@@ -19,6 +19,7 @@ config = DotDict({
 		'memcache': {
 			'prefix': 'FRAME_SESSION::',
 			'connection': None,
+			'servers': ['127.0.0.1:11211'],
 		},
 		
 		'memory': {

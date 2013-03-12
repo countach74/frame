@@ -27,8 +27,6 @@ class Authorization(Decorator):
 	
 		class Auth(Authorization):
 			def authorize(self, f, *args, **kwargs):
-				user_groups = frame.app.session['user']
-				
 				if 'user' in frame.app.session and any((i in self.groups for i in user_groups)):
 					# Allow access
 					return f(*args, **kwargs)

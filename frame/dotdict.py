@@ -1,3 +1,6 @@
+import pprint
+
+
 class DotDict(dict):
 	'''
 	A simple subclass of :class:`dict` that allows for dot-notation access of all elements.
@@ -26,3 +29,6 @@ class DotDict(dict):
 			self[key] = DotDict(value)
 		else:
 			self[key] = value
+
+	def prettify(self):
+		pprint.pprint(self)

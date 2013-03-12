@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
 	name="frame",
-	version="0.0.1",
+	version="0.1a",
 	author="Tim Radke",
 	author_email="countach74@gmail.com",
 	description="A very simple, lightweight MVC-based web framework.",
