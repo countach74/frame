@@ -260,11 +260,11 @@ class HTTPServer(object):
 		logger.log_info("Shutting down Frame HTTP Server...")
 		
 		for i in self.connections:
-			i.shutdown()
+			#i.shutdown()
 			i.close()
 			i.join()
 
-		self.socket.shutdown(socket.SHUT_RDWR)
+		#self.socket.shutdown(socket.SHUT_RDWR)
 		self.socket.close()
 
 		if stop_monitor and self.auto_reload:
@@ -273,6 +273,6 @@ class HTTPServer(object):
 
 		for i in threading.enumerate():
 			if isinstance(i, Connection):
-				i.shutdown()
+				#i.shutdown()
 				i.close()
 				i.join()

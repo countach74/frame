@@ -66,7 +66,10 @@ class ModuleMonitor(threading.Thread):
 			except AttributeError:
 				continue
 			
-			stats[path] = os.stat(path)
+			try:
+				stats[path] = os.stat(path)
+			except EnvironmentError:
+				pass
 			
 			try:
 				path = path[:-1]
