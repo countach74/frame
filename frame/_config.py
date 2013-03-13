@@ -1,4 +1,5 @@
 from dotdict import DotDict
+from jinja2 import PackageLoader
 import sys
 import os
 
@@ -45,6 +46,12 @@ config = DotDict({
 	'application': {
 		'name': 'Frame (%s)' % __app_name,
 		'strip_trailing_slash': True
+	},
+	
+	'templates': {
+		'directory': 'templates',
+		'loaders': [PackageLoader('frame', 'templates')],
+		'globals': {}
 	},
 	
 	'pre_processors': ['form_url_decoder', 'form_json_decoder', 'form_multipart_decoder'],

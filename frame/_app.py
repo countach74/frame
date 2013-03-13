@@ -48,21 +48,23 @@ class App(Singleton):
 	hacking, this is the place to do it.
 	'''
 	
-	def __init__(self, template_dir='templates', debug=True):
+	def __init__(self, debug=True):
 		'''
 		Initialize the application with some sane defaults.
 		'''
 		
 		self.static_map = StaticDispatcher(self)
-		self._template_dir = template_dir
 		self.path = os.path.dirname(os.path.abspath(sys.argv[0]))
 		self.routes = routes
 		self.debug = debug
 
-		# Setup Jinja2 environment
+		# Jinja2 environment placeholder
+		self.environment = None
+		'''
 		self.environment = Environment(loader=ChoiceLoader([
 			FileSystemLoader(template_dir),
 			PackageLoader('frame', 'templates')]))
+		'''
 
 		self.toolset = toolset
 		self.toolset.app = self
@@ -82,22 +84,6 @@ class App(Singleton):
 		orm.datatypes.CustomType._environment = self.environment
 		self.orm_drivers = orm.available_drivers
 		
-	@property
-	def template_dir(self):
-		'''
-		Retrieve or set the Jinja2 template directory. When setting, automatically reloads
-		the Jinja2 environment using a :mod:`jinja2.ChoiceLoader` to provide fallback
-		templates provided by Frame.
-		'''
-		return self._template_dir
-
-	@template_dir.setter
-	def template_dir(self, value):
-		self._template_dir = value
-		self.environment = Environment(loader=ChoiceLoader([
-			FileSystemLoader(value),
-			PackageLoader('frame', 'templates')]))
-
 	@property
 	def orm(self):
 		return self.orm_drivers[config.orm.driver]
@@ -156,7 +142,7 @@ class App(Singleton):
 				raise Error500
 
 			self.environment.globals['session'] = self.session
-			self.environment.globals['tools'] = self.toolset
+			#self.environment.globals['tools'] = self.toolset
 
 			# Cool trick to make 'session' available everywhere easily
 			sys.modules['session'] = self.session
@@ -243,6 +229,13 @@ class App(Singleton):
 			logger.log_info("Mapping static directory: '%s' => '%s'" % (
 				mapping, truncate(path, 40)))
 			self.static_map[mapping] = path
+			
+		# Setup Jinja2 Environment
+		loaders = list(config.templates.loaders)
+		loaders.insert(0, FileSystemLoader(config.templates.directory))
+		self.environment = Environment(loader=ChoiceLoader(loaders))
+		self.environment.globals.update(config.templates.globals)
+		
 			
 	def daemonize(self, host='127.0.0.1', port=8080, ports=None, server_type='fcgi', *args, **kwargs):
 		from daemonize import daemonize

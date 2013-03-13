@@ -7,10 +7,6 @@ from _config import config
 
 def daemonize(app, host='127.0.0.1', port=8080, ports=None, server_type='fcgi', *args, **kwargs):
 	def start_daemon(p):
-		pid = os.fork()
-		if pid > 1:
-			return None
-			
 		os.chdir("/")
 		sid = os.setsid()
 		os.umask(0)
@@ -27,6 +23,10 @@ def daemonize(app, host='127.0.0.1', port=8080, ports=None, server_type='fcgi', 
 	
 	if ports:
 		for p in ports:
-			start_daemon(p)
+			pid = os.fork()
+			if pid == 0:
+				start_daemon(p)
 	else:
-		start_daemon(port)
+		pid = os.fork()
+		if pid == 0:
+			start_daemon(port)
