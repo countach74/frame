@@ -7,6 +7,8 @@ take a look at the :func:`deflate` source code below.
 '''
 
 import zlib
+import datetime
+from util import format_date, get_gmt_now
 
 
 def deflate(request, response, response_body):
@@ -43,3 +45,9 @@ def handle_head_request(request, response, response_body):
 	else:
 		response.headers['Content-Length'] = str(len(response_body))
 		return response_body
+		
+		
+def add_last_modified(request, response, response_body):
+	if 'Last-Modified' not in response.headers:
+		response.headers['Last-Modified'] = format_date(get_gmt_now())
+	return response_body

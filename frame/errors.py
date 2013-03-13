@@ -11,14 +11,15 @@ messages.
 import sys, os
 from cgi import escape
 from _logger import logger
+from _config import config
 from dotdict import DotDict
 
 
-_default_error_headers = {
-	'Content-Type': 'text/html',
+_default_error_headers = dict(config.response.default_headers)
+_default_error_headers.update({
 	'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
 	'Pragma': 'no-cache'
-}
+})
 
 
 class HTTPError(Exception):

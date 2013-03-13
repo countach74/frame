@@ -1,5 +1,6 @@
 from dotdict import DotDict
 from _routes import routes
+from _logger import logger
 
 
 class Request(object):

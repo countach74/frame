@@ -31,14 +31,14 @@ class Headers(object):
 
 
 class RequestHeaders(Headers, RequestMixin):
-	__request_pattern = re.compile("([a-zA-Z0-9\-]+):\s+(.*?)\r\n")
+	__request_pattern = re.compile("([a-zA-Z0-9\-]+):\s+(.*)")
 
 	def _parse(self, request):
 		result = {}
 		data = re.findall(self.__request_pattern, request)
 
 		for k, v in data:
-			result["HTTP_%s" % self._format_key(k)] = v
+			result["HTTP_%s" % self._format_key(k)] = v.strip()
 		return result
 		
 	def __repr__(self):

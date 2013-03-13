@@ -54,7 +54,7 @@ class Session(object):
 		expires = config.sessions.expires
 
 		self.init()
-
+		
 		if key_name in app.request.cookies and not force:
 			self._key = app.request.cookies[key_name]
 			self._data = self.load(self._key)

@@ -54,9 +54,19 @@ config = DotDict({
 		'globals': {}
 	},
 	
-	'pre_processors': ['form_url_decoder', 'form_json_decoder', 'form_multipart_decoder'],
-	'post_processors': ['handle_head_request'],
+	'pre_processors': [
+		'form_url_decoder',
+		'form_json_decoder',
+		'form_multipart_decoder'
+	],
+	
+	'post_processors': [
+		'handle_head_request',
+		'add_last_modified'
+	],
+	
 	'timezone': 'America/Los_Angeles',
+	
 	'logger': {
 		'driver': 'stdout',
 		'production': {
@@ -70,8 +80,22 @@ config = DotDict({
 		},
 		'null': {}
 	},
+	
 	'static_map': {
 		'/static': 'static',
 		'/static/frame': os.path.join(__frame_path, 'static')
+	},
+	
+	'frame': {
+		'path': __frame_path,
+		'version': '0.1a',
+	},
+	
+	'response': {
+		'default_headers': {
+			'Connection': 'close',
+			'Content-Type': 'text/html',
+			'Server': 'Frame HTTPServer 0.1a',
+		}
 	}
 })

@@ -3,7 +3,9 @@ from errors import Error404
 from util import parse_query_string
 import datetime
 from _routes import routes
+from _config import config
 import os
+from util import format_date, get_gmt_now
 
 
 class Response(object):
@@ -29,8 +31,8 @@ class Response(object):
 		self.controller = controller
 		
 		#: A :mod:`frame.dotdict.DotDict` that stores the response headers
-		self.headers = DotDict({
-			'Content-Type': 'text/html',
+		self.headers = DotDict(config.response.default_headers)
+		self.headers.update({
 			'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0',
 			'Pragma': 'no-cache'
 		})
@@ -56,9 +58,9 @@ class Response(object):
 		cookie = ["%s=%s" % (key, value)]
 
 		if expires:
-			now = datetime.datetime.utcnow()
+			now = get_gmt_now()
 			then = now + datetime.timedelta(hours=expires)
-			cookie.append("Expires=%s" % then.strftime("%a, %d-%b-%Y %H:%M:%S UTC"))
+			cookie.append("Expires=%s" % format_date(then))
 		if domain:
 			cookie.append("Domain=%s" % domain)
 		if path:

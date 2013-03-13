@@ -2,7 +2,11 @@ from errors import Error404, Error401
 import re
 import os
 import mimetypes
+import datetime
+import time
+from util import format_date
 from dotdict import DotDict
+from _config import config
 
 
 class StaticDispatcher(object):
@@ -37,18 +41,18 @@ class StaticDispatcher(object):
 
 			if uri.startswith(key):
 				uri = uri[len(key):]
-
-				while uri.startswith('/'):
-					uri = uri[1:]
+				uri = uri.lstrip('/')
 
 				file_path = os.path.join(value, uri)
 				trash, extension = os.path.splitext(file_path)
+				
+				headers = dict(config.response.default_headers)
 
 				if os.path.exists(file_path) and file_path.startswith(value):
 					try:
-						headers = {'Content-Type': mimetypes.types_map[extension]}
+						headers['Content-Type'] = mimetypes.types_map[extension]
 					except KeyError:
-						headers = {'Content-Type': 'application/octet-stream'}
+						headers['Content-Type'] = 'application/octet-stream'
 					try:
 						response_body = self.read_file(file_path)
 					except EnvironmentError:
@@ -56,6 +60,15 @@ class StaticDispatcher(object):
 
 				else:
 					continue
+				
+				try:
+					st = os.stat(file_path)
+				except EnvironmentError, e:
+					pass
+				else:
+					last_modified = datetime.datetime.fromtimestamp(
+						time.mktime(time.gmtime(st.st_mtime)))
+					headers['Last-Modified'] = format_date(last_modified)
 
 				self.app.response = DotDict({'headers': headers, 'status': '200 OK'})
 				return ('200 OK', headers, response_body)

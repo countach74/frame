@@ -7,6 +7,8 @@ are used internally by Frame; some are designed to be used by web developers.
 import re
 import types
 from threading import RLock
+import time
+import datetime
 
 
 class Decorator(object):
@@ -181,3 +183,11 @@ class Singleton(object):
 			cls.__instance = object.__new__(cls, *args, **kwargs)
 		
 		return cls.__instance
+		
+		
+def get_gmt_now():
+		return datetime.datetime.fromtimestamp(time.mktime(time.gmtime()))
+		
+		
+def format_date(d):
+	return d.strftime("%a, %d %b %Y %H:%M:%S GMT")
