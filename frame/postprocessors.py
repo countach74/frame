@@ -22,6 +22,24 @@ def deflate(request, response, response_body):
 	
 	if 'accept_encoding' in request.headers:
 		if 'deflate' in request.headers.accept_encoding.split(','):
-			response.headers['Content-Encoding'] = 'deflate'
-			return zlib.compress(response_body)
+			if response_body:
+				compressed = zlib.compress(response_body)
+				response.headers['Content-Encoding'] = 'deflate'
+				response.headers['Content-Length'] = str(len(compressed))
+				return compressed
+			else:
+				return response_body
 	return response_body
+
+
+def handle_head_request(request, response, response_body):
+	'''
+	Chops the response body off of HEAD requests
+	'''
+	
+	if request.headers.request_method == 'HEAD':
+		response.headers['Content-Length'] = '0'
+		return ''
+	else:
+		response.headers['Content-Length'] = str(len(response_body))
+		return response_body

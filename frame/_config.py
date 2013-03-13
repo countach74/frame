@@ -55,7 +55,7 @@ config = DotDict({
 	},
 	
 	'pre_processors': ['form_url_decoder', 'form_json_decoder', 'form_multipart_decoder'],
-	'post_processors': [],
+	'post_processors': ['handle_head_request'],
 	'timezone': 'America/Los_Angeles',
 	'logger': {
 		'driver': 'stdout',
