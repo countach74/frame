@@ -95,7 +95,7 @@ config = DotDict({
 		'default_headers': {
 			'Connection': 'close',
 			'Content-Type': 'text/html',
-			'Server': 'Frame HTTPServer 0.1a',
+			'Server': 'Frame/0.1a',
 		}
 	}
 })
