@@ -2,6 +2,7 @@ from errors import Error404, Error401
 import re
 import os
 import mimetypes
+from dotdict import DotDict
 
 
 class StaticDispatcher(object):
@@ -56,6 +57,7 @@ class StaticDispatcher(object):
 				else:
 					continue
 
+				self.app.response = DotDict({'headers': headers, 'status': '200 OK'})
 				return ('200 OK', headers, response_body)
 
 		raise Error404

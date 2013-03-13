@@ -52,6 +52,10 @@ class Connection(object):
 			self.close()
 			return
 			
+		if not data:
+			self.close()
+			return
+			
 		self.total_received += len(data)
 		self.read_buffer.append(data)
 		last_two_chunks = ''.join(self.read_buffer[-2:])
