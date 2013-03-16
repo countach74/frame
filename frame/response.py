@@ -20,15 +20,19 @@ class Response(object):
 	
 	'''
 	
-	def __init__(self, app, controller):
-		if not controller:
+	def __init__(self, app, action, params={}, query_string=''):
+		if not action:
 			raise Error404
 
 		#: The Frame application
 		self.app = app
+		self.action = action
+		self.params = params
+		self.query_string = query_string
+		self._body = None
 		
 		#: The current controller action method (mislabeled)
-		self.controller = controller
+		#self.controller = controller
 		
 		#: A :mod:`frame.dotdict.DotDict` that stores the response headers
 		self.headers = DotDict(config.response.default_headers)
@@ -91,7 +95,7 @@ class Response(object):
 		'''
 		self._start_response(self.status, self.headers.items())
 
-	def render(self, query_string, uri_data):
+	def render(self):
 		'''
 		Calls the controller action with the parameters passed via the query string, uri_data
 		dictionary, and additional_params dictionary.
@@ -103,30 +107,40 @@ class Response(object):
 		:return: Rendered response body
 		'''
 		
-		params = parse_query_string(query_string)
+		qs_params = parse_query_string(self.query_string)
 
 		# Must render the page before we send start_response; otherwise, controller-set
 		# headers will not get set in time.
-		result = self.controller(**dict(
-			params.items() +
-			uri_data.items() +
+		result = self.action(**dict(
+			qs_params.items() +
+			self.params.items() +
 			self.additional_params.items()))
 		
 		if result is None or isinstance(result, dict):
-			method_name = self.controller.__name__
+			method_name = self.action.__name__
 			
-			if hasattr(self.controller.im_self, '__resource__'):
-				template_dir = self.controller.im_self.__resource__['template_dir']
+			if hasattr(self.action.im_self, '__resource__'):
+				template_dir = self.action.im_self.__resource__['template_dir']
 				template_path = os.path.join(template_dir, method_name + '.html')
 			
-				result = self.controller.im_self.get_template(template_path).render(
+				result = self.action.im_self.get_template(template_path).render(
 					result if result else {})
 					
 			else:
-				template_dir = self.controller.im_self.__class__.__name__.lower()
+				template_dir = self.action.im_self.__class__.__name__.lower()
 				template_path = os.path.join(template_dir, method_name + '.html')
 				
-				result = self.controller.im_self.get_template(template_path).render(
+				result = self.action.im_self.get_template(template_path).render(
 					result if result else {})
 
-		return result
+		self._body = result
+
+	@property
+	def body(self):
+		if self._body is None:
+			self.render()
+		return self._body
+		
+	@body.setter
+	def body(self, value):
+		self._body = value

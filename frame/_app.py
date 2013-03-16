@@ -118,7 +118,7 @@ class App(Singleton):
 			environ['PATH_INFO'] = environ.get('PATH_INFO', '').rstrip('/')
 
 		try:
-			match, data = routes.match(environ=environ)
+			match, params = routes.match(environ=environ)
 
 		# If TypeError or AttributeError occurs then no match was found; we should throw a 404.
 		except (TypeError, AttributeError):
@@ -130,11 +130,16 @@ class App(Singleton):
 
 		# Otherwise, we should be good to handle the request
 		else:
-			for key, value in data.items():
+			for key, value in params.items():
 				if key in ('controller', 'action', 'method'):
-					del(data[key])
+					del(params[key])
 
-			self.response = Response(self, match)
+			if 'query_string' in self.request.headers:
+				query_string = self.request.headers.query_string
+			else:
+				query_string = ''
+				
+			self.response = Response(self, match, params, query_string)
 			
 			try:
 				self.session = self.session_interface.get_session()
@@ -157,11 +162,7 @@ class App(Singleton):
 					raise Error500
 
 			try:
-				if 'query_string' in self.request.headers:
-					query_string = self.request.headers.query_string
-				else:
-					query_string = ''
-				response_body = self.response.render(query_string, data)
+				self.response.render()
 			except HTTPError, e:
 				save_session()
 				raise e
@@ -171,10 +172,7 @@ class App(Singleton):
 			# Save the session before yielding the response
 			save_session()
 
-			status = self.response.status
-			headers = self.response.headers
-
-		return (status, headers, response_body)
+		return self.response
 
 	def __call__(self, environ, start_response):
 		'''
@@ -186,18 +184,17 @@ class App(Singleton):
 		'''
 		
 		try:
-			status, headers, response_body = self._dispatch(environ)
+			response = self._dispatch(environ)
 		except HTTPError, e:
-			response_body = e.render(self)
-			status = self.response.status
-			headers = self.response.headers
+			e.render(self)
+			response = e.response
 
 		# Need to do something more elegant to handle generators/chunked encoding...
 		# Also need to come up with a better way to log chunked encodings
-		if type(response_body) is types.GeneratorType:
-			start_response(status, headers.items())
+		if type(response.body) is types.GeneratorType:
+			start_response(response.status, response.headers.items())
 			response_length = 0
-			for i in response_body:
+			for i in response.body:
 				yield i
 				response_length += len(i)
 			logger.log_request(self.request, self.response, response_length)
@@ -205,15 +202,15 @@ class App(Singleton):
 		else:
 			# Apply post processors
 			for i in self.post_processors:
-				response_body = i(self.request, self.response, str(response_body))
+				i(self.request, self.response)
 
 			#response_body = str(response_body)
 			#headers['Content-Length'] = str(len(response_body))
 
 			# Deliver the goods
-			start_response(status, headers.items())
-			yield response_body
-			logger.log_request(self.request, self.response, len(response_body))
+			start_response(response.status, response.headers.items())
+			yield response.body
+			logger.log_request(self.request, self.response, len(response.body))
 			
 	def _prep_start(self):
 		'''

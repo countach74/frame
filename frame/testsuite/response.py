@@ -35,26 +35,22 @@ class TestResponse(unittest.TestCase):
 			
 	def test_string_no_args(self):
 		response = Response(self.app, self.controller.string_no_args)
-		result = response.render('', {})
-		assert 'Hello, world!' == result
+		assert 'Hello, world!' == response.body
 			
 			
 	def test_dictionary_no_args(self):
 		response = Response(self.app, self.controller.dictionary_no_args)
-		result = response.render('', {})
-		assert 'Hello, that!' == result
+		assert 'Hello, that!' == response.body
 		
 	def test_string_args(self):
-		response = Response(self.app, self.controller.string_args)
-		result1 = response.render('', {'data': 'some data'})
-		result2 = response.render('data=some+data', {})
-		assert 'Test: some data' == result1 == result2
+		response1 = Response(self.app, self.controller.string_args, {'data': 'some data'})
+		response2 = Response(self.app, self.controller.string_args, {}, 'data=some+data')
+		assert 'Test: some data' == response1.body == response2.body
 		
 	def test_dictionary_args(self):
-		response = Response(self.app, self.controller.dictionary_args)
-		result1 = response.render('', {'data': 'some data'})
-		result2 = response.render('data=some+data', {})
-		assert 'Test: some data' == result1 == result2
+		response1 = Response(self.app, self.controller.dictionary_args, {'data': 'some data'})
+		response2 = Response(self.app, self.controller.dictionary_args, {}, 'data=some+data')
+		assert 'Test: some data' == response1.body == response2.body
 		
 	def test_set_cookie(self):
 		response = Response(self, self.controller.string_no_args)

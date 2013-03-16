@@ -59,7 +59,8 @@ class HTTPError(Exception):
 		#: A fake response object that stores the status line and headers
 		self.response = DotDict({
 			'status': status,
-			'headers': base_headers
+			'headers': base_headers,
+			'body': None
 		})
 		
 	def render(self, app):
@@ -75,7 +76,7 @@ class HTTPError(Exception):
 		status_code = self.response.status.split(None, 1)[0]
 		template_path = 'errors/%s.html' % status_code
 		
-		return app.environment.get_template(template_path).render(
+		self.response.body = app.environment.get_template(template_path).render(
 			app=app, status=self.response.status, **self.kwargs)
 			
 			
