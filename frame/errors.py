@@ -41,7 +41,7 @@ class HTTPError(Exception):
 	
 	response_class = None
 	
-	def __init__(self, status, headers={}, *args, **kwargs):
+	def __init__(self, status, headers={}, body=None, *args, **kwargs):
 		'''
 		Initialize the HTTP Error.
 		
@@ -58,25 +58,25 @@ class HTTPError(Exception):
 		#: Stores any keyword arguments; these are passed to the template when rendered
 		self.kwargs = kwargs
 		
-		#: A fake response object that stores the status line and headers
-		self.response = self.response_class.from_data(status, base_headers, None)
+		self.response = self.response_class.from_data(status, base_headers, body)
 		
 	def render(self, app):
 		'''
 		Renders the error template, which is assumed to be in the template directory at
-		``errors/{error_code}.html``.
+		``errors/{error_code}.html`` if the response body is None. Otherwise, does
+		nothing.
 		
 		:param app: The Frame application
-		:return: The rendered error
 		'''
 		
 		status_code = self.response.status.split(None, 1)[0]
 		template_path = 'errors/%s.html' % status_code
 		
-		self.response.body = app.environment.get_template(template_path).render(
-			app=app, status=self.response.status, **self.kwargs)
-			
-			
+		if self.response._body is None:
+			self.response.body = app.environment.get_template(template_path).render(
+				app=app, status=self.response.status, **self.kwargs)
+				
+	
 class Error301(HTTPError):
 	'''
 	A simple 301 redirect. Note that the 3xx errors assume they will be used as redirects
