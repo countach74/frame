@@ -134,12 +134,7 @@ class App(Singleton):
 				if key in ('controller', 'action', 'method'):
 					del(params[key])
 
-			if 'query_string' in self.request.headers:
-				query_string = self.request.headers.query_string
-			else:
-				query_string = ''
-				
-			self.response = Response(self, match, params, query_string)
+			self.response = Response(self, match, params)
 			
 			try:
 				self.session = self.session_interface.get_session()
@@ -147,10 +142,6 @@ class App(Singleton):
 				raise Error500
 
 			self.environment.globals['session'] = self.session
-			#self.environment.globals['tools'] = self.toolset
-
-			# Cool trick to make 'session' available everywhere easily
-			sys.modules['session'] = self.session
 
 			for i in self.pre_processors:
 				i(self.request, self.response)

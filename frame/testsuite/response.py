@@ -27,11 +27,9 @@ class TestResponse(unittest.TestCase):
 		self.app = frame.app
 		self.app.environment = Environment(loader=PackageLoader('frame', 'testsuite/templates'))
 		
-		
 	def test_no_controller(self):
 		with self.assertRaises(frame.Error404):
 			response = Response(self.app, None)
-			
 			
 	def test_string_no_args(self):
 		response = Response(self.app, self.controller.string_no_args)
@@ -43,14 +41,12 @@ class TestResponse(unittest.TestCase):
 		assert 'Hello, that!' == response.body
 		
 	def test_string_args(self):
-		response1 = Response(self.app, self.controller.string_args, {'data': 'some data'})
-		response2 = Response(self.app, self.controller.string_args, {}, 'data=some+data')
-		assert 'Test: some data' == response1.body == response2.body
+		response = Response(self.app, self.controller.string_args, {'data': 'some data'})
+		assert 'Test: some data' == response.body
 		
 	def test_dictionary_args(self):
-		response1 = Response(self.app, self.controller.dictionary_args, {'data': 'some data'})
-		response2 = Response(self.app, self.controller.dictionary_args, {}, 'data=some+data')
-		assert 'Test: some data' == response1.body == response2.body
+		response = Response(self.app, self.controller.dictionary_args, {'data': 'some data'})
+		assert 'Test: some data' == response.body
 		
 	def test_set_cookie(self):
 		response = Response(self, self.controller.string_no_args)

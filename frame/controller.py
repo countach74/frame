@@ -81,12 +81,14 @@ class Controller(object):
 		'''
 		return self.app.environment.get_template
 
+	"""
 	@property
 	def response(self):
 		'''
 		Retrieve the current :mod:`frame.response.Response` object.
 		'''
 		return app.response
+	"""
 
 	@property
 	def request(self):

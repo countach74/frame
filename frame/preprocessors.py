@@ -67,3 +67,8 @@ def form_multipart_decoder(request, response):
 						response.additional_params[i] = fs[i].file.read()
 					else:
 						response.additional_params[i] = fs[i]
+						
+		
+def handle_query_string(request, response):
+	if 'query_string' in request.headers:
+		response.additional_params.update(parse_query_string(request.headers.query_string))

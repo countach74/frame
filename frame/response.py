@@ -1,6 +1,5 @@
 from dotdict import DotDict
-from errors import Error404
-from util import parse_query_string
+from errors import HTTPError, Error404
 import datetime
 from _routes import routes
 from _config import config
@@ -20,7 +19,7 @@ class Response(object):
 	
 	'''
 	
-	def __init__(self, app, action, params={}, query_string=''):
+	def __init__(self, app, action, params={}):
 		if not action:
 			raise Error404
 
@@ -28,11 +27,7 @@ class Response(object):
 		self.app = app
 		self.action = action
 		self.params = params
-		self.query_string = query_string
 		self._body = None
-		
-		#: The current controller action method (mislabeled)
-		#self.controller = controller
 		
 		#: A :mod:`frame.dotdict.DotDict` that stores the response headers
 		self.headers = DotDict(config.response.default_headers)
@@ -105,22 +100,13 @@ class Response(object):
 
 	def render(self):
 		'''
-		Calls the controller action with the parameters passed via the query string, uri_data
-		dictionary, and additional_params dictionary.
-		
-		:param query_string: The query string from the WSGI environ dictionary
-		:param uri_data: Parameters passed via routes. For example, consider the route
-			``/users/{user}``; when the client enters ``/users/bob``, uri_data will be passed
-			``user='bob'``
-		:return: Rendered response body
+		Calls the controller action with the parameters passed via the params
+		dictionary and additional_params dictionary. Saves output to :attr:`_body`.
 		'''
 		
-		qs_params = parse_query_string(self.query_string)
-
 		# Must render the page before we send start_response; otherwise, controller-set
 		# headers will not get set in time.
 		result = self.action(**dict(
-			qs_params.items() +
 			self.params.items() +
 			self.additional_params.items()))
 		
@@ -152,3 +138,7 @@ class Response(object):
 	@body.setter
 	def body(self, value):
 		self._body = value
+		
+		
+# Horrible hack to solve circular dependency problem
+HTTPError.response_class = Response

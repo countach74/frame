@@ -39,6 +39,8 @@ class HTTPError(Exception):
 		}
 	'''
 	
+	response_class = None
+	
 	def __init__(self, status, headers={}, *args, **kwargs):
 		'''
 		Initialize the HTTP Error.
@@ -57,11 +59,7 @@ class HTTPError(Exception):
 		self.kwargs = kwargs
 		
 		#: A fake response object that stores the status line and headers
-		self.response = DotDict({
-			'status': status,
-			'headers': base_headers,
-			'body': None
-		})
+		self.response = self.response_class.from_data(status, base_headers, None)
 		
 	def render(self, app):
 		'''

@@ -55,9 +55,10 @@ config = DotDict({
 	},
 	
 	'pre_processors': [
+		'handle_query_string',
 		'form_url_decoder',
 		'form_json_decoder',
-		'form_multipart_decoder'
+		'form_multipart_decoder',
 	],
 	
 	'post_processors': [
