@@ -45,6 +45,14 @@ class Response(object):
 		#: Additional keyword arguments to pass off to the controller action method
 		#: when it is called
 		self.additional_params = {}
+		
+	@classmethod
+	def from_data(cls, status, headers, body):
+		response = cls(None, 'placeholder')
+		response.status = status
+		response.headers = DotDict(headers)
+		response.body = body
+		return response
 			
 	def set_cookie(self, key, value, expires=1, domain=None, path='/', secure=False, http_only=False):
 		'''

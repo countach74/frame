@@ -31,14 +31,13 @@ class TestStaticDispatcher(unittest.TestCase):
 			'PATH_INFO': '/static/%s' % self.file_name
 		}
 		
-		match = self.static_map.match(environ)
+		response = self.static_map.match(environ)
 		required_headers = ('Last-Modified', 'Connection', 'Content-Type', 'Server')
 		
 		# Assert that things come back as they should.
-		self.assertEqual('200 OK', match[0])
-		self.assertTrue(all((i in match[1] for i in required_headers)))
-		self.assertEqual(self.file_data, ''.join(match[2]))
-		self.assertEqual(match[1], app.response.headers)
+		assert response.status == '200 OK'
+		assert all((i in response.headers for i in required_headers))
+		assert self.file_data == ''.join(response.body)
 		
 	def test_not_found(self):
 		environ = {
