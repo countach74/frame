@@ -157,7 +157,11 @@ class App(Singleton):
 					raise Error500
 
 			try:
-				response_body = self.response.render(self.request.headers.query_string, data)
+				if 'query_string' in self.request.headers:
+					query_string = self.request.headers.query_string
+				else:
+					query_string = ''
+				response_body = self.response.render(query_string, data)
 			except HTTPError, e:
 				save_session()
 				raise e

@@ -242,6 +242,5 @@ class Routes(Singleton):
 				
 		make_resource(self.controllers[controller], mount_point)
 				
-		#self.resources[self.controllers[controller].__class__] = self.parse_mount_point(mount_point)
 
 routes = Routes()

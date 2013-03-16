@@ -10,7 +10,14 @@ setup(
 	description="A very simple, lightweight MVC-based web framework.",
 	license="GNU",
 	keywords="web framework mvc",
-	packages=['frame', 'frame.server', 'frame.orm', 'frame.orm.drivers', 'frame.orm.drivers.mongo'],
+	packages=[
+		'frame',
+		'frame.server',
+		'frame.orm',
+		'frame.orm.drivers',
+		'frame.orm.drivers.mongo',
+		'frame.testsuite',
+	],
 	package_data={
 		'frame': [
 			'templates/*.html',
@@ -22,7 +29,9 @@ setup(
 			'templates/macros/*.html',
 			'templates/js/*.js',
 			'static/js/*.js',
-			'static/css/*.css'
+			'static/css/*.css',
+			'testsuite/templates/*.html',
+			'testsuite/templates/controller/*.html',
 		]
 	},
 	install_requires=['Jinja2', 'Routes', 'pytz']
