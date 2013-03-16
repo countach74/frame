@@ -17,9 +17,8 @@ class TestPostprocessors(unittest.TestCase):
 		
 	def test_deflate(self):
 		encoded_string = zlib.compress("Hello, world!")
-		response_body = self.response.render('', {})
-		response_body = deflate(self.request, self.response, response_body)
-		assert encoded_string == response_body
+		deflate(self.request, self.response)
+		assert encoded_string == self.response.body
 		assert self.response.headers['Content-Encoding'] == 'deflate'
 		assert self.response.headers['Content-Length'] == str(len(encoded_string))
 		
@@ -28,11 +27,9 @@ class TestPostprocessors(unittest.TestCase):
 		environ['REQUEST_METHOD'] = 'HEAD'
 		environ['wsgi.input'] = StringIO()
 		request = Request(environ)
-		response_body = self.response.render('', {})
-		response_body = handle_head_request(request, self.response, response_body)
-		assert response_body == '' and self.response.headers['Content-Length'] == '0'
+		handle_head_request(request, self.response)
+		assert self.response.body == '' and self.response.headers['Content-Length'] == '0'
 		
 	def test_add_last_modified(self):
-		response_body = self.response.render('', {})
-		response_body = add_last_modified(self.request, self.response, response_body)
+		add_last_modified(self.request, self.response)
 		assert 'Last-Modified' in self.response.headers

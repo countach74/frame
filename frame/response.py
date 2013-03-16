@@ -1,6 +1,5 @@
 from dotdict import DotDict
-from errors import Error404
-from util import parse_query_string
+from errors import HTTPError, Error404
 import datetime
 from _routes import routes
 from _config import config
@@ -20,15 +19,23 @@ class Response(object):
 	
 	'''
 	
-	def __init__(self, app, controller):
-		if not controller:
+	def __init__(self, app, action, params={}):
+		if not action:
 			raise Error404
 
 		#: The Frame application
 		self.app = app
+		self.action = action
+		self.params = params
+		self._body = None
 		
-		#: The current controller action method (mislabeled)
-		self.controller = controller
+		# For consistency, attach self to app
+		if app:
+			app.response = self
+		
+		# Attempt to set the action controller's 'response' attribute
+		if hasattr(action, 'im_self'):
+			action.im_self.response = self
 		
 		#: A :mod:`frame.dotdict.DotDict` that stores the response headers
 		self.headers = DotDict(config.response.default_headers)
@@ -41,6 +48,14 @@ class Response(object):
 		#: Additional keyword arguments to pass off to the controller action method
 		#: when it is called
 		self.additional_params = {}
+		
+	@classmethod
+	def from_data(cls, status, headers, body):
+		response = cls(None, 'placeholder')
+		response.status = status
+		response.headers = DotDict(headers)
+		response.body = body
+		return response
 			
 	def set_cookie(self, key, value, expires=1, domain=None, path='/', secure=False, http_only=False):
 		'''
@@ -91,42 +106,47 @@ class Response(object):
 		'''
 		self._start_response(self.status, self.headers.items())
 
-	def render(self, query_string, uri_data):
+	def render(self):
 		'''
-		Calls the controller action with the parameters passed via the query string, uri_data
-		dictionary, and additional_params dictionary.
-		
-		:param query_string: The query string from the WSGI environ dictionary
-		:param uri_data: Parameters passed via routes. For example, consider the route
-			``/users/{user}``; when the client enters ``/users/bob``, uri_data will be passed
-			``user='bob'``
-		:return: Rendered response body
+		Calls the controller action with the parameters passed via the params
+		dictionary and additional_params dictionary. Saves output to :attr:`_body`.
 		'''
 		
-		params = parse_query_string(query_string)
-
 		# Must render the page before we send start_response; otherwise, controller-set
 		# headers will not get set in time.
-		result = self.controller(**dict(
-			params.items() +
-			uri_data.items() +
+		result = self.action(**dict(
+			self.params.items() +
 			self.additional_params.items()))
 		
 		if result is None or isinstance(result, dict):
-			method_name = self.controller.__name__
+			method_name = self.action.__name__
 			
-			if hasattr(self.controller.im_self, '__resource__'):
-				template_dir = self.controller.im_self.__resource__['template_dir']
+			if hasattr(self.action.im_self, '__resource__'):
+				template_dir = self.action.im_self.__resource__['template_dir']
 				template_path = os.path.join(template_dir, method_name + '.html')
 			
-				result = self.controller.im_self.get_template(template_path).render(
+				result = self.action.im_self.get_template(template_path).render(
 					result if result else {})
 					
 			else:
-				template_dir = self.controller.im_self.__class__.__name__.lower()
+				template_dir = self.action.im_self.__class__.__name__.lower()
 				template_path = os.path.join(template_dir, method_name + '.html')
 				
-				result = self.controller.im_self.get_template(template_path).render(
+				result = self.action.im_self.get_template(template_path).render(
 					result if result else {})
 
-		return result
+		self._body = result
+
+	@property
+	def body(self):
+		if self._body is None:
+			self.render()
+		return self._body
+		
+	@body.setter
+	def body(self, value):
+		self._body = value
+		
+		
+# Horrible hack to solve circular dependency problem
+HTTPError.response_class = Response

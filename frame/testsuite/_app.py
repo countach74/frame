@@ -30,9 +30,9 @@ class TestApp(unittest.TestCase):
 			
 	def test_dispatch_string(self):
 		environ = {'REQUEST_METHOD': 'GET', 'PATH_INFO': '/string'}
-		status, headers, response_body = frame.app._dispatch(environ)
-		assert status == '200 OK'
-		assert response_body == 'basic string output'
+		response = frame.app._dispatch(environ)
+		assert response.status == '200 OK'
+		assert response.body == 'basic string output'
 		
 	def test_call_error(self):
 		environ = {'REQUEST_METHOD': 'GET', 'PATH_INFO': '/error'}

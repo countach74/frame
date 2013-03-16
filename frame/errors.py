@@ -39,6 +39,8 @@ class HTTPError(Exception):
 		}
 	'''
 	
+	response_class = None
+	
 	def __init__(self, status, headers={}, *args, **kwargs):
 		'''
 		Initialize the HTTP Error.
@@ -57,10 +59,7 @@ class HTTPError(Exception):
 		self.kwargs = kwargs
 		
 		#: A fake response object that stores the status line and headers
-		self.response = DotDict({
-			'status': status,
-			'headers': base_headers
-		})
+		self.response = self.response_class.from_data(status, base_headers, None)
 		
 	def render(self, app):
 		'''
@@ -71,11 +70,10 @@ class HTTPError(Exception):
 		:return: The rendered error
 		'''
 		
-		app.response = self.response
 		status_code = self.response.status.split(None, 1)[0]
 		template_path = 'errors/%s.html' % status_code
 		
-		return app.environment.get_template(template_path).render(
+		self.response.body = app.environment.get_template(template_path).render(
 			app=app, status=self.response.status, **self.kwargs)
 			
 			

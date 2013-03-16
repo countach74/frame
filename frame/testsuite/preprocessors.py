@@ -5,7 +5,8 @@ from response import Controller
 from frame.request import Request
 from frame.response import Response
 from frame._app import app
-from frame.preprocessors import form_url_decoder, form_json_decoder, form_multipart_decoder
+from frame.preprocessors import (form_url_decoder, form_json_decoder,
+	form_multipart_decoder, handle_query_string)
 
 
 class TestPreprocessors(unittest.TestCase):
@@ -36,3 +37,13 @@ class TestPreprocessors(unittest.TestCase):
 		Argh, skipping this one for now...
 		'''
 		pass
+	
+	def test_handle_query_string(self):
+		environ = dict(_environ)
+		environ.update({
+			'QUERY_STRING': 'data=some_data'
+		})
+		request = Request(environ)
+		
+		handle_query_string(request, self.response)
+		assert self.response.additional_params == {'data': 'some_data'}

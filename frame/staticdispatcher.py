@@ -7,6 +7,7 @@ import time
 from util import format_date
 from dotdict import DotDict
 from _config import config
+from response import Response
 
 
 class StaticDispatcher(object):
@@ -70,7 +71,7 @@ class StaticDispatcher(object):
 						time.mktime(time.gmtime(st.st_mtime)))
 					headers['Last-Modified'] = format_date(last_modified)
 
-				self.app.response = DotDict({'headers': headers, 'status': '200 OK'})
-				return ('200 OK', headers, response_body)
+				response = Response.from_data('200 OK', headers, response_body)
+				return response
 
 		raise Error404
