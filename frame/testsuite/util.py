@@ -3,6 +3,7 @@ import datetime
 from frame import util
 
 
+
 class SimpleUtilTests(unittest.TestCase):
 	def test_format_date(self):
 		timestamp_string = "Wed, 13 Mar 2013 15:13:45 GMT"

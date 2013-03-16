@@ -184,6 +184,11 @@ class Singleton(object):
 		
 		return cls.__instance
 		
+	@classmethod
+	def _clear_instance(self):
+		del(self.__instance)
+		self.__instance = None
+		
 		
 def get_gmt_now():
 		return datetime.datetime.fromtimestamp(time.mktime(time.gmtime()))

@@ -9,3 +9,4 @@ from request import TestRequest
 from preprocessors import TestPreprocessors
 from postprocessors import TestPostprocessors
 from dotdict import TestDotDict
+from _routes import TestConnect, TestResource
