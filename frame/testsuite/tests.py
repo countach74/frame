@@ -10,3 +10,4 @@ from preprocessors import TestPreprocessors
 from postprocessors import TestPostprocessors
 from dotdict import TestDotDict
 from _routes import TestConnect, TestResource
+from _app import TestApp
