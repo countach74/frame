@@ -29,6 +29,14 @@ class Response(object):
 		self.params = params
 		self._body = None
 		
+		# For consistency, attach self to app
+		if app:
+			app.response = self
+		
+		# Attempt to set the action controller's 'response' attribute
+		if hasattr(action, 'im_self'):
+			action.im_self.response = self
+		
 		#: A :mod:`frame.dotdict.DotDict` that stores the response headers
 		self.headers = DotDict(config.response.default_headers)
 		self.headers.update({

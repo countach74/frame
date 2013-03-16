@@ -70,7 +70,6 @@ class HTTPError(Exception):
 		:return: The rendered error
 		'''
 		
-		app.response = self.response
 		status_code = self.response.status.split(None, 1)[0]
 		template_path = 'errors/%s.html' % status_code
 		

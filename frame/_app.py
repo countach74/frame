@@ -134,7 +134,7 @@ class App(Singleton):
 				if key in ('controller', 'action', 'method'):
 					del(params[key])
 
-			self.response = Response(self, match, params)
+			response = Response(self, match, params)
 			
 			try:
 				self.session = self.session_interface.get_session()
@@ -144,7 +144,7 @@ class App(Singleton):
 			self.environment.globals['session'] = self.session
 
 			for i in self.pre_processors:
-				i(self.request, self.response)
+				i(self.request, response)
 				
 			def save_session():
 				try:
@@ -153,7 +153,7 @@ class App(Singleton):
 					raise Error500
 
 			try:
-				self.response.render()
+				response.render()
 			except HTTPError, e:
 				save_session()
 				raise e
@@ -163,7 +163,7 @@ class App(Singleton):
 			# Save the session before yielding the response
 			save_session()
 
-		return self.response
+		return response
 
 	def __call__(self, environ, start_response):
 		'''
@@ -188,12 +188,12 @@ class App(Singleton):
 			for i in response.body:
 				yield i
 				response_length += len(i)
-			logger.log_request(self.request, self.response, response_length)
+			logger.log_request(self.request, response, response_length)
 
 		else:
 			# Apply post processors
 			for i in self.post_processors:
-				i(self.request, self.response)
+				i(self.request, response)
 
 			#response_body = str(response_body)
 			#headers['Content-Length'] = str(len(response_body))
@@ -201,7 +201,7 @@ class App(Singleton):
 			# Deliver the goods
 			start_response(response.status, response.headers.items())
 			yield response.body
-			logger.log_request(self.request, self.response, len(response.body))
+			logger.log_request(self.request, response, len(response.body))
 			
 	def _prep_start(self):
 		'''

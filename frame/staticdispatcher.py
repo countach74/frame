@@ -71,7 +71,7 @@ class StaticDispatcher(object):
 						time.mktime(time.gmtime(st.st_mtime)))
 					headers['Last-Modified'] = format_date(last_modified)
 
-				self.app.response = Response.from_data('200 OK', headers, response_body)
-				return self.app.response
+				response = Response.from_data('200 OK', headers, response_body)
+				return response
 
 		raise Error404
