@@ -7,7 +7,8 @@ setup(
 	version="0.1a",
 	author="Tim Radke",
 	author_email="countach74@gmail.com",
-	description="A very simple, lightweight MVC-based web framework.",
+	url="http://python.thirteen8.com/frame",
+	description="A lightweight WSGI framework.",
 	license="GNU",
 	keywords="web framework mvc",
 	packages=[
