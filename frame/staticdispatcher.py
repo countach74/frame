@@ -44,8 +44,10 @@ class StaticDispatcher(object):
 
 	def __setitem__(self, key, value):
 		'''
-		Sets a static map. For example::
+		Sets a static map.
 		
+		For example::
+			
 			static_map['/scripts'] = '/path/to/scripts'
 		'''
 		self.static_map[key] = os.path.abspath(value)
