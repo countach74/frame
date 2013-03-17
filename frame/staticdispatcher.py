@@ -11,19 +11,47 @@ from response import Response
 
 
 class StaticDispatcher(object):
+	'''
+	Establishes mount points for static files and then checks if those mount points are
+	valid for a given request. If they are, serves files or throws 404.
+	
+	The use of this class is handled internally by Frame. Direct interaction with it is
+	generally unnecessary and ill-advised. If you would like to add static mappings, please
+	do it via `config.static_map`. For example::
+	
+		frame.config.static_map.update({
+			'/scripts': '/path/to/scripts',
+			'/styles': '/path/to/styles'
+		})
+	'''
+	
 	def __init__(self, app, static_map=None):
+		'''
+		Initialize the static dispatcher.
+		
+		:param app: The Frame application
+		:param static_map: A dictionary of static maps to use initially
+		'''
 		self.app = app
 		self.static_map = static_map if static_map else {}
 		self._resolve_map()
 
 	def __getitem__(self, key):
+		'''
+		Returns the local path to a requested URI map.
+		'''
 		return self.static_map[key]
 
 	def __setitem__(self, key, value):
+		'''
+		Sets a static map. For example::
+		
+			static_map['/scripts'] = '/path/to/scripts'
+		'''
 		self.static_map[key] = os.path.abspath(value)
 
 	def __repr__(self):
-		return "Static Dispatcher: %s" % self.static_map
+		return "<Static Dispatcher: %s>" % self.static_map
 
 	def _resolve_map(self):
 		for i in self.static_map:
@@ -37,6 +65,14 @@ class StaticDispatcher(object):
 			data = f.read(4096)
 
 	def match(self, environ):
+		'''
+		Checks the WSGI environment provided to see if the requested path exists within the
+		static mappings. If it does, returns the file; else, throws ``404 Not Found``.
+		
+		:param environ: WSGI environment (uses `PATH_INFO`)
+		:param return: Returns a :class:`frame.response.Response` with the appropriate
+			content-type, body, etc.
+		'''
 		for key, value in self.static_map.items():
 			uri = environ['PATH_INFO']
 

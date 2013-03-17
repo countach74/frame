@@ -1,7 +1,7 @@
 '''
 Post processors are applied to the response body just before delivery to the client. This
 is how simple things like "deflate" are implemented. A post processor is simply a callable
-that accepts three parameters: request, response, response_body. They are exactly what
+that accepts two parameters: the request and response objects. They are exactly what
 they sound like. To learn how to implement a post processor, probably the best way is to
 take a look at the :func:`deflate` source code below.
 '''
@@ -18,7 +18,6 @@ def deflate(request, response):
 	
 	:param request: The current :mod:`frame.request.Request` object
 	:param response: The current :mod:`frame.response.Response` object
-	:return: Compressed response_body
 	'''
 	
 	if 'accept_encoding' in request.headers:
