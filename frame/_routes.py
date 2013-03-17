@@ -1,4 +1,5 @@
 import re
+import os
 from routes import Mapper
 from uuid import uuid4
 from util import make_resource, Singleton
@@ -168,6 +169,32 @@ class Routes(Singleton):
 	def parse_mount_point(self, mount_point):
 		regex = re.compile("(/{.*?})")
 		return re.sub(regex, '', mount_point)
+		
+	def expose(self, controller, mount_point=None):
+		'''
+		Creates simple routes for all callable attributes of the given controller.
+		
+		:param controller: A lower case representation of the controller to create routes for
+		:param mount_point: If specified, allows specification of the prefix to use. If not
+			specified, assumes '/{controller_name}' as the prefix
+		'''
+		if not mount_point:
+			mount_point = '/%s' % controller
+			
+		controller_object = self.controllers[controller]
+		
+		candidates = (i for i in dir(controller_object) if not i.startswith('_'))
+		for i in candidates:
+			try:
+				method = getattr(controller_object, i)
+			except AttributeError:
+				continue
+			else:
+				if hasattr(method, '__call__'):
+					method_mount_point = os.path.join(mount_point, i)
+					self.connect(method_mount_point, '%s#%s' % (controller, i))
+		
+		self.connect(mount_point, '%s#index' % controller)
 		
 	def resource(self, controller, mount_point=None):
 		'''
