@@ -92,7 +92,7 @@ class Error301(HTTPError):
 		'''
 		
 		headers = {'Location': url}
-		HTTPError.__init__(status, headers, *args, **kwargs)
+		HTTPError.__init__(self, status, headers, body='unnecessary', *args, **kwargs)
 			
 			
 class Error302(HTTPError):
@@ -101,7 +101,7 @@ class Error302(HTTPError):
 	'''
 	def __init__(self, url, status='302 Found', *args, **kwargs):
 		headers = {'Location': url}
-		HTTPError.__init__(status, headers, *args, **kwargs)
+		HTTPError.__init__(self, status, headers, body='unnecessary', *args, **kwargs)
 		
 		
 class Error303(Error301):
