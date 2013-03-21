@@ -186,7 +186,7 @@ class App(Singleton):
 			start_response(response.status, response.headers.items())
 			response_length = 0
 			for i in response.body:
-				yield i
+				yield str(i)
 				response_length += len(i)
 			logger.log_request(self.request, response, response_length)
 
@@ -200,7 +200,7 @@ class App(Singleton):
 
 			# Deliver the goods
 			start_response(response.status, response.headers.items())
-			yield response.body
+			yield str(response.body)
 			logger.log_request(self.request, response, len(response.body))
 			
 	def _prep_start(self):
