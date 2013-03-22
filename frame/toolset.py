@@ -1,3 +1,7 @@
+from urllib import quote_plus
+from util import parse_query_string
+
+
 class ToolSet(object):
 	def __init__(self):
 		self.app = None
@@ -65,6 +69,30 @@ class Link(Tool):
 class Href(Link):
 	pass
 
+	
+class CurrentUri(Tool):
+	name = 'current_uri'
+	
+	def __call__(self, **kwargs):
+		if 'query_string' in self.app.request.headers:
+			query_string = self.app.request.headers.query_string
+		else:
+			query_string = ''
+			
+		data = parse_query_string(query_string)
+		data.update(kwargs)
+		
+		path_info = self.app.request.headers.path_info
+		items = map(self.make_query_item, data.iteritems())
+		
+		if items:
+			return path_info + '?%s' % '&'.join(items)
+		else:
+			return path_info
+		
+	def make_query_item(self, item):
+		key, value = map(str, item)
+		return '%s=%s' % (key, quote_plus(value))
 
 class GetPartialView(Tool):
 	name = 'get_partial_view'

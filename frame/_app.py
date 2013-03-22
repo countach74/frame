@@ -142,6 +142,7 @@ class App(Singleton):
 				raise Error500
 
 			self.environment.globals['session'] = self.session
+			self.environment.globals['tools'] = toolset
 
 			for i in self.pre_processors:
 				i(self.request, response)
