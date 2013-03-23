@@ -91,7 +91,7 @@ class Error301(HTTPError):
 		:param status: The status line to use
 		'''
 		
-		headers = {'Location': url}
+		headers = {'Location': str(url)}
 		HTTPError.__init__(self, status, headers, body='unnecessary', *args, **kwargs)
 			
 			
@@ -99,7 +99,7 @@ class Error302(HTTPError):
 	'''
 	Like :exc:`Error301` but with ``302 Found`` status instead.
 	'''
-	def __init__(self, url, status='302 Found', *args, **kwargs):
+	def __init__(self, str(url), status='302 Found', *args, **kwargs):
 		headers = {'Location': url}
 		HTTPError.__init__(self, status, headers, body='unnecessary', *args, **kwargs)
 		
