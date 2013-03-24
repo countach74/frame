@@ -66,6 +66,8 @@ config = DotDict({
 		'add_last_modified'
 	],
 	
+	'hooks': [],
+	
 	'timezone': 'America/Los_Angeles',
 	
 	'logger': {

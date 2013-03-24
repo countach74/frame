@@ -133,6 +133,13 @@ class App(Singleton):
 			for key, value in params.items():
 				if key in ('controller', 'action', 'method'):
 					del(params[key])
+					
+			# Process hook entry points
+			for hook in config.hooks:
+				try:
+					hook.enter(match.im_self)
+				except Exception, e:
+					raise Error500
 
 			response = Response(self, match, params)
 			
@@ -160,6 +167,13 @@ class App(Singleton):
 				raise e
 			except Exception, e:
 				raise Error500
+			
+			# Process hook exit points
+			for hook in config.hooks:
+				try:
+					hook.exit(match.im_self)
+				except Exception, e:
+					raise Error500
 
 			# Save the session before yielding the response
 			save_session()
