@@ -140,12 +140,21 @@ class App(Singleton):
 					hook.enter(match.im_self)
 				except Exception, e:
 					raise Error500
+				
+			# Process hook exit points
+			def exit_hooks():
+				for hook in config.hooks:
+					try:
+						hook.exit(match.im_self)
+					except Exception, e:
+						raise Error500
 
 			response = Response(self, match, params)
 			
 			try:
 				self.session = self.session_interface.get_session()
 			except Exception, e:
+				exit_hooks()
 				raise Error500
 
 			self.environment.globals['session'] = self.session
@@ -158,23 +167,22 @@ class App(Singleton):
 				try:
 					self.session_interface.save_session(self.session)
 				except Exception, e:
+					exit_hooks()
 					raise Error500
 
 			try:
 				response.render()
 			except HTTPError, e:
+				exit_hooks()
 				save_session()
 				raise e
 			except Exception, e:
+				exit_hooks()
 				raise Error500
 			
-			# Process hook exit points
-			for hook in config.hooks:
-				try:
-					hook.exit(match.im_self)
-				except Exception, e:
-					raise Error500
-
+			# Run exit hooks
+			exit_hooks()
+			
 			# Save the session before yielding the response
 			save_session()
 
