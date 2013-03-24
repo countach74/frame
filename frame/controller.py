@@ -6,7 +6,7 @@ from errors import Error301, Error302, Error303
 class _ControllerMeta(type):
 	def __init__(cls, name, stuff, args):
 		if name != 'Controller':
-			routes.controllers[name.lower()] = cls()
+			routes.controllers[name.lower()] = cls
 	
 		type.__init__(cls, name, stuff, args)
 

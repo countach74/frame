@@ -10,6 +10,7 @@ import sys
 import sessions
 import mimetypes
 import types
+from threading import current_thread
 
 # For jinja2 toolset
 from toolset import toolset
@@ -65,6 +66,9 @@ class App(Singleton):
 			FileSystemLoader(template_dir),
 			PackageLoader('frame', 'templates')]))
 		'''
+		
+		# Store data for each thread indiviually
+		self.thread_data = {}
 
 		self.toolset = toolset
 		self.toolset.app = self
@@ -83,6 +87,50 @@ class App(Singleton):
 		forms.BasicForm._environment = self.environment
 		orm.datatypes.CustomType._environment = self.environment
 		self.orm_drivers = orm.available_drivers
+		
+	def _setup_thread(self):
+		thread = current_thread()
+		if thread not in self.thread_data:
+			self.thread_data[thread] = {}
+		
+	@property
+	def session(self):
+		return self.thread_data[current_thread()]['session']
+	
+	@session.setter
+	def session(self, value):
+		self._setup_thread()
+		self.thread_data[current_thread()]['session'] = value
+		
+	@session.deleter
+	def session(self):
+		del(self.thread_data[current_thread()]['session'])
+		
+	@property
+	def request(self):
+		return self.thread_data[current_thread()]['request']
+		
+	@request.setter
+	def request(self, value):
+		self._setup_thread()
+		self.thread_data[current_thread()]['request'] = value
+		
+	@request.deleter
+	def request(self):
+		del(self.thread_data[current_thread()]['request'])
+		
+	@property
+	def response(self):
+		return self.thread_data[current_thread()]['response']
+		
+	@response.setter
+	def response(self, value):
+		self._setup_thread()
+		self.thread_data[current_thread()]['response'] = value
+		
+	@response.deleter
+	def response(self):
+		del(self.thread_data[current_thread()]['response'])
 		
 	@property
 	def orm(self):
@@ -225,6 +273,15 @@ class App(Singleton):
 			start_response(response.status, response.headers.items())
 			yield str(response.body)
 			logger.log_request(self.request, response, len(response.body))
+			
+		self._remove_thread_data()
+		
+	def _remove_thread_data(self):
+		thread = current_thread()
+		if thread in self.thread_data:
+			del(self.thread_data[thread])
+		if thread in self.routes.thread_data:
+			del(self.routes.thread_data[thread])
 			
 	def _prep_start(self):
 		'''

@@ -4,6 +4,7 @@ from routes import Mapper
 from uuid import uuid4
 from util import make_resource, Singleton
 from _logger import logger
+import threading
 
 
 class Routes(Singleton):
@@ -108,6 +109,7 @@ class Routes(Singleton):
 		self.mapper = Mapper()
 		self.controllers = {}
 		self.resources = {}
+		self.thread_data = {}
 		
 	'''
 	def __call__(self, route, *args, **kwargs):
@@ -127,7 +129,7 @@ class Routes(Singleton):
 		
 		:param controller: A :mod:`frame.controller.Controller`
 		'''
-		self.controllers[controller.__class__.__name__.lower()] = controller()
+		self.controllers[controller.__class__.__name__.lower()] = controller
 
 	def match(self, *args, **kwargs):
 		'''
@@ -138,18 +140,30 @@ class Routes(Singleton):
 		match = self.mapper.match(*args, **kwargs)
 		if match:
 			if not hasattr(match['action'], '__call__'):
-				controller = self.controllers[match['controller']]
+				controller = self.controllers[match['controller']]()
 				action = getattr(controller, match['action'])
 			else:
 				action = match['action']
 				controller = None
-			self.current_controller = controller
-			self.current_action = action
+				
+			self.thread_data[threading.current_thread()] = {
+				'controller': controller,
+				'action': action
+			}
+			
 			return (action, match)
 
 		else:
 			return None
+			
+	@property
+	def current_controller(self):
+		return self.thread_data[threading.current_thread()]['controller']
 
+	@property
+	def current_action(self):
+		return self.thread_data[threading.current_thread()]['action']
+		
 	def connect(self, path, controller=None, *args, **kwargs):
 		'''
 		Connect a URI pattern to a controller.
