@@ -12,6 +12,8 @@ parameters to the controller action method.
 from util import parse_query_string
 from cgi import FieldStorage
 import json
+from multipart import MultipartParser
+import re
 
 
 def form_url_decoder(request, response):
@@ -47,27 +49,21 @@ def form_json_decoder(request, response):
 def form_multipart_decoder(request, response):
 	'''
 	Exactly like :func:`form_url_decoder` except that file uploads are handled via
-	:mod:`cgi.FieldStorage`, which presents file uploads as file-like objects.
+	the 'multipart' module.
 	'''
 	
 	if 'content_type' in request.headers:
-		if request.headers.content_type.lower().startswith('multipart/form-data'):
-			fs = FieldStorage(fp=request.wsgi.input, environ=request.environ)
-			for i in fs:
-				if isinstance(fs[i], list):
-					data = []
-					for j in fs[i]:
-						if j.type == 'text/plain':
-							data.append(j.file.read())
-						else:
-							data.append(j)
-					response.additional_params[i] = data
+		multipart_pattern = re.compile('^multipart/form-data; boundary=(.*)', re.I)
+		match = multipart_pattern.match(request.headers.content_type)
+		
+		if match:
+			mp = MultipartParser(request.wsgi.input, boundary=match.group(1))
+			for i in mp:
+				if i.filename:
+					response.additional_params[i.name] = i
 				else:
-					if fs[i].type == 'text/plain':
-						response.additional_params[i] = fs[i].file.read()
-					else:
-						response.additional_params[i] = fs[i]
-						
+					response.additional_params[i.name] = i.value
+				
 		
 def handle_query_string(request, response):
 	if 'query_string' in request.headers:

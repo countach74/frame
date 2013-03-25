@@ -51,7 +51,8 @@ config = DotDict({
 	'templates': {
 		'directory': 'templates',
 		'loaders': [PackageLoader('frame', 'templates')],
-		'globals': {}
+		'globals': {},
+		'filters': {}
 	},
 	
 	'pre_processors': [

@@ -209,7 +209,10 @@ class App(Singleton):
 			self.environment.globals['tools'] = toolset
 
 			for i in self.pre_processors:
-				i(self.request, response)
+				try:
+					i(self.request, response)
+				except Exception, e:
+					raise Error500
 				
 			def save_session():
 				try:
@@ -307,6 +310,7 @@ class App(Singleton):
 		loaders.insert(0, FileSystemLoader(config.templates.directory))
 		self.environment = Environment(loader=ChoiceLoader(loaders))
 		self.environment.globals.update(config.templates.globals)
+		self.environment.filters.update(config.templates.filters)
 		
 			
 	def daemonize(self, host='127.0.0.1', port=8080, ports=None, server_type='fcgi', *args, **kwargs):
