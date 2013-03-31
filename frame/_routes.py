@@ -249,9 +249,19 @@ class Routes(Singleton):
 				'method': 'GET',
 			},
 			{
+				'uri': '%s/{slug}.{content_type}',
+				'action': 'update',
+				'method': 'POST',
+			},
+			{
 				'uri': '%s/{slug}',
 				'action': 'update',
 				'method': 'POST',
+			},
+			{
+				'uri': '%s/{slug}.{content_type}',
+				'action': 'delete',
+				'method': 'DELETE',
 			},
 			{
 				'uri': '%s/{slug}',
