@@ -114,9 +114,8 @@ class Response(object):
 		
 		# Must render the page before we send start_response; otherwise, controller-set
 		# headers will not get set in time.
-		result = self.action(**dict(
-			self.params.items() +
-			self.additional_params.items()))
+		params = dict(self.params.items() + self.additional_params.items())
+		result = self.action(**params)
 		
 		if result is None or isinstance(result, dict):
 			method_name = self.action.__name__

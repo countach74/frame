@@ -229,6 +229,11 @@ class Routes(Singleton):
 				'method': 'GET',
 			},
 			{
+				'uri': '%s.{content_type}',
+				'action': 'create',
+				'method': 'POST'
+			},
+			{
 				'uri': '%s',
 				'action': 'create',
 				'method': 'POST',
