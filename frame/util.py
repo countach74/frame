@@ -9,6 +9,7 @@ import types
 from threading import RLock
 import time
 import datetime
+import json
 
 
 class Decorator(object):
@@ -196,3 +197,61 @@ def get_gmt_now():
 		
 def format_date(d):
 	return d.strftime("%a, %d %b %Y %H:%M:%S GMT")
+	
+	
+def jsonify(require_content_type=False):
+	from _app import app
+	
+	def wrapper(f):
+		def handler(*args, **kwargs):
+			if not require_content_type or (require_content_type and 'content_type' in kwargs
+					and kwargs['content_type'] == 'json'):
+			
+				app.response.headers['Content-Type'] = 'application/json'
+				return json.dumps(f(*args, **kwargs))
+				
+			else:
+				return f(*args, **kwargs)
+				
+		handler.__name__ = f.__name__
+		return handler
+		
+	return wrapper
+	
+	
+class Pagination(object):
+	def __init__(self, query, page=1, limit=20, max_limit=100):
+		self.query = query
+		self.page = int(page)
+		self.limit = int(limit)
+		self.max_limit = max_limit
+		
+		self.offset = (self.page-1) * self.limit
+		self._count = None
+		self._num_pages = None
+		
+	def __iter__(self):
+		for i in self.query.offset(self.offset).limit(self.limit):
+			yield i
+			
+	@property
+	def count(self):
+		if not self._count:
+			self._count = self.query.count()
+		return self._count
+		
+	@property
+	def num_pages(self):
+		if not self._num_pages:
+			remainder = self.count % self.limit
+			num_pages = self.count / self.limit
+			if remainder:
+				num_pages += 1
+			self._num_pages = num_pages
+		return self._num_pages
+			
+	@property
+	def pages(self):
+		pages = {}
+		for i in xrange(1, self.num_pages + 1):
+			yield {'num': i, 'selected': i == self.page}

@@ -1,0 +1,9 @@
+{% macro render(pagination, container="pagination_container", class="pagination") -%}
+	<div class="{{container}}">
+		<ul class="{{class}}">
+		{%- for p in pagination.pages -%}
+			<li><a href="{{tools.current_uri(page=p.num)}}"{{' class="selected"' if p.selected}}>{{p.num}}</a></li>
+		{%- endfor -%}
+		</ul>
+	</div>
+{%- endmacro %}

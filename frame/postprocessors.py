@@ -8,6 +8,7 @@ take a look at the :func:`deflate` source code below.
 
 import zlib
 import datetime
+import json
 from util import format_date, get_gmt_now
 
 
@@ -37,8 +38,6 @@ def handle_head_request(request, response):
 	if request.headers.request_method == 'HEAD':
 		response.headers['Content-Length'] = '0'
 		response.body = ''
-	else:
-		response.headers['Content-Length'] = str(len(response.body))
 		
 		
 def add_last_modified(request, response):
@@ -47,3 +46,19 @@ def add_last_modified(request, response):
 	'''
 	if 'Last-Modified' not in response.headers:
 		response.headers['Last-Modified'] = format_date(get_gmt_now())
+		
+		
+def jsonify(request, response):
+	'''
+	Assume that whenever the content_type kwarg is present and set to 'json', the response
+	should be JSON encoded. This is for every request! If you only want to enable this sort
+	of behavior on specific controller actions, use :func:`frame.util.jsonify`.
+	'''
+	print 'ok'
+	params = dict(response.params.items() + response.additional_params.items())
+	if 'content_type' in params and params['content_type'] == 'json':
+		print 'JSON'
+		response.headers['Content-Type'] == 'application/json'
+		json_data = json.dumps(response.action(**params))
+		response.body = json_data
+		response.headers['Content-Length'] = len(json_data)
