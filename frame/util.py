@@ -255,3 +255,14 @@ class Pagination(object):
 		pages = {}
 		for i in xrange(1, self.num_pages + 1):
 			yield {'num': i, 'selected': i == self.page}
+			
+			
+def load_driver(driver_type, name):
+	from importlib import import_module
+	mod = import_module('frame.%ss' % driver_type)
+	return getattr(mod, '%s%s' % (name.title(), driver_type.title()))
+	
+
+def register_driver(driver_type, name, driver):
+	mod = import_module('frame.%ss' % driver_type)
+	setattr(mod, '%s%s' % (name.title(), driver_type.title()), driver)

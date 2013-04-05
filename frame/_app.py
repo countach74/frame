@@ -33,7 +33,7 @@ from _config import config
 
 # Import logger
 from _logger import logger
-from util import truncate, Singleton
+from util import truncate, Singleton, load_driver
 
 
 class App(Singleton):
@@ -166,7 +166,7 @@ class App(Singleton):
 			environ['PATH_INFO'] = environ.get('PATH_INFO', '').rstrip('/')
 
 		try:
-			match, params = routes.match(environ=environ)
+			match, params = self.dispatcher.handle(environ=environ)
 
 		# If TypeError or AttributeError occurs then no match was found; we should throw a 404.
 		except (TypeError, AttributeError):
@@ -311,6 +311,9 @@ class App(Singleton):
 		self.environment = Environment(loader=ChoiceLoader(loaders))
 		self.environment.globals.update(config.templates.globals)
 		self.environment.filters.update(config.templates.filters)
+		
+		# Initialize dispatcher
+		self.dispatcher = load_driver('dispatcher', config.application.dispatcher)(self)
 		
 			
 	def daemonize(self, host='127.0.0.1', port=8080, ports=None, server_type='fcgi', *args, **kwargs):

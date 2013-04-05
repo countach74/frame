@@ -45,7 +45,8 @@ config = DotDict({
 	
 	'application': {
 		'name': 'Frame (%s)' % __app_name,
-		'strip_trailing_slash': True
+		'strip_trailing_slash': True,
+		'dispatcher': 'routes'
 	},
 	
 	'templates': {
