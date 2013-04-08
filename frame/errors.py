@@ -13,6 +13,7 @@ from cgi import escape
 from _logger import logger
 from _config import config
 from dotdict import DotDict
+from jinja2.exceptions import TemplateNotFound
 
 
 _default_error_headers = dict(config.response.default_headers)
@@ -73,8 +74,12 @@ class HTTPError(Exception):
 		template_path = 'errors/%s.html' % status_code
 		
 		if self.response._body is None:
-			self.response.body = app.environment.get_template(template_path).render(
-				app=app, status=self.response.status, **self.kwargs)
+			try:
+				self.response.body = app.environment.get_template(template_path).render(
+					app=app, status=self.response.status, **self.kwargs)
+			except TemplateNotFound:
+				self.response.body = app.environment.get_template('errors/generic.html').render(
+					app=app, status=self.response.status, **self.kwargs)
 				
 	
 class Error301(HTTPError):

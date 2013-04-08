@@ -17,6 +17,10 @@ import select
 
 # Logger stuff
 from frame import logger
+from frame.server.worker import HTTPQueue
+
+# Import config
+from frame._config import config
 
 
 def parse_body(request):
@@ -74,7 +78,9 @@ class Connection(object):
 					if self in self.server.r_list:
 						self.server.r_list.remove(self)
 					request = ''.join(self.read_buffer)
-					self.handle_request(request)
+					
+					#self.handle_request(request)
+					self.server.worker_queue.put(self, request)
 					
 		elif self.request_headers:
 			self.request_body_received += len(data)
@@ -82,7 +88,9 @@ class Connection(object):
 				if self in self.server.r_list:
 					self.server.r_list.remove(self)
 				request = ''.join(self.read_buffer)
-				self.handle_request(request)
+				
+				#self.handle_request(request)
+				self.server.worker_queue.put(self, request)
 
 	def handle_write(self):
 		data = self.write_buffer.pop(0)
@@ -143,11 +151,7 @@ class Connection(object):
 			self.status = '500 Internal Server Error'
 			self.headers = [('Content-Type', 'text/html')]
 
-			e_type, e_value, e_tb = sys.exc_info()
-			tb = traceback.format_exception(e_type, e_value, e_tb)
-
-			response.append(
-				self.server.environment.get_template('traceback.html').render(traceback=tb))
+			response.append('<h1>500 Internal Server Error</h1>')
 
 		finally:
 			# Send headers
@@ -200,6 +204,9 @@ class HTTPServer(object):
 		self.auto_reload = auto_reload
 
 		self.connections = []
+		
+		# Setup worker queue
+		self.worker_queue = HTTPQueue(self, config.http_server.num_workers)
 
 		# Setup socket
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -240,7 +247,7 @@ class HTTPServer(object):
 		
 		while self.running:
 			try:
-				r_ready, w_ready, e_ready = select.select(self.r_list, self.w_list, self.e_list)
+				r_ready, w_ready, e_ready = select.select(self.r_list, self.w_list, self.e_list, 0.1)
 			except select.error:
 				r_ready, w_ready, e_ready = [], [], []
 				self.running = False
@@ -274,6 +281,8 @@ class HTTPServer(object):
 		if stop_monitor and self.auto_reload:
 			self.module_monitor.stop()
 			self.module_monitor.join()
+			
+		self.worker_queue.stop()
 
 		for i in threading.enumerate():
 			if isinstance(i, Connection):

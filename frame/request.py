@@ -16,6 +16,7 @@ class Request(object):
 	def __init__(self, environ):
 		self.environ = environ   #: The WSGI environment
 		self.headers = DotDict()   #: Both FastCGI and HTTP headers
+		self.http_headers = DotDict()   #: Dictionary of just HTTP headers
 		self.wsgi = DotDict()   #: The WSGI objects
 		
 		self.__parse(environ)
@@ -31,6 +32,7 @@ class Request(object):
 			elif key.startswith('HTTP_'):
 				parsed_key = key[5:].lower()
 				self.headers[parsed_key] = value
+				self.http_headers[parsed_key] = value
 
 			else:
 				parsed_key = key.lower()

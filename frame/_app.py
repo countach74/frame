@@ -291,14 +291,11 @@ class App(Singleton):
 		Populate data gathered from global config.
 		'''
 		
-		import preprocessors
-		import postprocessors
-		
 		for i in config.pre_processors:
-			self.pre_processors.append(getattr(preprocessors, i))
+			self.pre_processors.append(load_driver('preprocessor', i, False))
 		
 		for i in config.post_processors:
-			self.post_processors.append(getattr(postprocessors, i))
+			self.post_processors.append(load_driver('postprocessor', i, False))
 
 		for mapping, path in config.static_map.items():
 			logger.log_info("Mapping static directory: '%s' => '%s'" % (

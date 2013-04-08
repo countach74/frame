@@ -132,7 +132,7 @@ class Response(object):
 				template_path = os.path.join(template_dir, method_name + '.html')
 				
 				result = self.action.im_self.get_template(template_path).render(
-					result if result else {})
+					result or {})
 
 		self._body = result
 
