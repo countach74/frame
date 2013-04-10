@@ -33,7 +33,9 @@ from _config import config
 
 # Import logger
 from _logger import logger
-from util import truncate, Singleton, load_driver
+from util import truncate, Singleton
+
+import driverinterface
 
 
 class App(Singleton):
@@ -72,12 +74,14 @@ class App(Singleton):
 
 		self.toolset = toolset
 		self.toolset.app = self
-
+		
+		self.drivers = self.setup_driver_database()
+			
 		# Setup partial views object
 		self.partial_views = PartialViews(self)
 
 		# Setup session interface
-		self.session_interface = sessions.SessionInterface(self)
+		#self.session_interface = sessions.SessionInterface(self)
 		
 		# Setup pre and post processor lists
 		self.pre_processors = []
@@ -87,6 +91,32 @@ class App(Singleton):
 		forms.BasicForm._environment = self.environment
 		orm.datatypes.CustomType._environment = self.environment
 		self.orm_drivers = orm.available_drivers
+		
+	def setup_driver_database(self):
+		drivers = driverinterface.DriverDatabase(self)
+		
+		drivers.add_interface(
+			'session',
+			driverinterface.SessionInterface,
+			config=config.sessions)
+			
+		# Add postprocessor interface
+		drivers.add_interface(
+			'postprocessor',
+			driverinterface.PostprocessorInterface)
+			
+		# Add preprocessor interface
+		drivers.add_interface(
+			'preprocessor',
+			driverinterface.PreprocessorInterface)
+		
+		# Add routes interface
+		drivers.add_interface(
+			'dispatcher',
+			driverinterface.DispatcherInterface,
+			config=config.application)
+		
+		return drivers
 		
 	def _setup_thread(self):
 		thread = current_thread()
@@ -200,7 +230,7 @@ class App(Singleton):
 			response = Response(self, match, params)
 			
 			try:
-				self.session = self.session_interface.get_session()
+				self.session = self.drivers.session.get_session()
 			except Exception, e:
 				exit_hooks()
 				raise Error500
@@ -216,7 +246,7 @@ class App(Singleton):
 				
 			def save_session():
 				try:
-					self.session_interface.save_session(self.session)
+					self.drivers.session.save_session(self.session)
 				except Exception, e:
 					exit_hooks()
 					raise Error500
@@ -292,10 +322,10 @@ class App(Singleton):
 		'''
 		
 		for i in config.pre_processors:
-			self.pre_processors.append(load_driver('preprocessor', i, False))
+			self.pre_processors.append(self.drivers.preprocessor[i])
 		
 		for i in config.post_processors:
-			self.post_processors.append(load_driver('postprocessor', i, False))
+			self.post_processors.append(self.drivers.postprocessor[i])
 
 		for mapping, path in config.static_map.items():
 			logger.log_info("Mapping static directory: '%s' => '%s'" % (
@@ -310,7 +340,8 @@ class App(Singleton):
 		self.environment.filters.update(config.templates.filters)
 		
 		# Initialize dispatcher
-		self.dispatcher = load_driver('dispatcher', config.application.dispatcher)(self)
+		#self.dispatcher = load_driver('dispatcher', config.application.dispatcher)(self)
+		self.dispatcher = self.drivers.dispatcher.current(self)
 		
 			
 	def daemonize(self, host='127.0.0.1', port=8080, ports=None, server_type='fcgi', *args, **kwargs):
