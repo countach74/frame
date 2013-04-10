@@ -32,9 +32,13 @@ class StaticDispatcher(object):
 		:param app: The Frame application
 		:param static_map: A dictionary of static maps to use initially
 		'''
+		
 		self.app = app
 		self.static_map = static_map if static_map else {}
 		self._resolve_map()
+		
+		# Need to initialize mimetypes only very basic types will be known
+		mimetypes.init()
 
 	def __getitem__(self, key):
 		'''

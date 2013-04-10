@@ -10,7 +10,7 @@ import sys
 import sessions
 import mimetypes
 import types
-from threading import current_thread
+from threading import current_thread, RLock
 
 # For jinja2 toolset
 from toolset import toolset
@@ -86,11 +86,19 @@ class App(Singleton):
 		# Setup pre and post processor lists
 		self.pre_processors = []
 		self.post_processors = []
+		
+		self.config = config
 
 		# Setup ORM stuff
 		forms.BasicForm._environment = self.environment
 		orm.datatypes.CustomType._environment = self.environment
 		self.orm_drivers = orm.available_drivers
+		
+		# A global lock for the application
+		self.lock = RLock()
+		
+		# A variable to store whether or not _prep_start has been run
+		self._prepped = False
 		
 		self.load_modules()
 		
@@ -286,6 +294,11 @@ class App(Singleton):
 		:yield: Response body
 		'''
 		
+		if not self._prepped:
+			self.lock.acquire()
+			self._prep_start()
+			self.lock.release()
+		
 		try:
 			response = self._dispatch(environ)
 		except HTTPError, e:
@@ -329,6 +342,8 @@ class App(Singleton):
 		Populate data gathered from global config.
 		'''
 		
+		logger.log_info("Preparing WSGI Application...")
+		
 		for i in config.pre_processors:
 			self.pre_processors.append(self.drivers.preprocessor[i])
 		
@@ -348,9 +363,10 @@ class App(Singleton):
 		self.environment.filters.update(config.templates.filters)
 		
 		# Initialize dispatcher
-		#self.dispatcher = load_driver('dispatcher', config.application.dispatcher)(self)
 		self.dispatcher = self.drivers.dispatcher.current(self)
 		
+		# Signal that the application has been prepped
+		self._prepped = True
 			
 	def daemonize(self, host='127.0.0.1', port=8080, ports=None, server_type='fcgi', *args, **kwargs):
 		from daemonize import daemonize
@@ -365,8 +381,8 @@ class App(Singleton):
 		
 		from flup.server.fcgi import WSGIServer
 		
-		self._prep_start()
 		self.server_type = 'fcgi'
+		self._prep_start()
 		logger.log_info("Starting FLUP WSGI Server...")
 		WSGIServer(self, *args, **kwargs).run()
 

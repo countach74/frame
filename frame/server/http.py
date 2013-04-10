@@ -257,6 +257,8 @@ class HTTPServer(object):
 		if self.auto_reload:
 			self.module_monitor.start()
 		
+		logger.log_info("Frame HTTP Server is now ready")
+		
 		while self.running:
 			try:
 				r_ready, w_ready, e_ready = select.select(self.r_list, self.w_list, self.e_list, 0.1)
