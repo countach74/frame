@@ -34,12 +34,18 @@ class DriverInterface(dict):
 	def init(self, driver):
 		return driver()
 		
-	@property
-	def current(self):
-		if self.config:
+	def load_current(self):
+		if self.config and 'driver' in self.config:
 			return self.load_driver(self.config.driver)
 		else:
-			raise AttributeError("No driver config specified")
+			raise AttributeError("No driver config specified or config lacks 'driver' item")
+		
+	@property
+	def current(self):
+		if self.config and 'driver' in self.config:
+			return self[self.config.driver]
+		else:
+			raise AttributeError("No driver config specified or config lacks 'driver' item")
 			
 
 class DriverDatabase(object):
@@ -80,8 +86,8 @@ class SessionInterface(DriverInterface):
 		except SessionLoadError:
 			return driver(self.database.app, self, force=True)
 			
-	def get_session(self):
-		return self.current
+	# Alias to match old session interface
+	get_session = DriverInterface.load_current
 		
 	def save_session(self, session):
 		session._save(session._key, session._data)

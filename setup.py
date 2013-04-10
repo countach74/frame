@@ -34,5 +34,5 @@ setup(
 			'testsuite/templates/controller/*.html',
 		]
 	},
-	install_requires=['Jinja2', 'Routes', 'pytz']
+	install_requires=['Jinja2', 'Routes', 'pytz', 'multipart']
 )

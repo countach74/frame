@@ -92,6 +92,14 @@ class App(Singleton):
 		orm.datatypes.CustomType._environment = self.environment
 		self.orm_drivers = orm.available_drivers
 		
+		self.load_modules()
+		
+	def load_modules(self):
+		import pkg_resources
+		for entrypoint in pkg_resources.iter_entry_points('frame'):
+			module = entrypoint.load()
+			module(self)
+		
 	def setup_driver_database(self):
 		drivers = driverinterface.DriverDatabase(self)
 		
