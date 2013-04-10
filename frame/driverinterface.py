@@ -56,7 +56,7 @@ class DriverDatabase(object):
 	def add_interface(self, interface_name, interface, drivers={}, config=None):
 		self.interfaces[interface_name] = interface(self, drivers, config)
 		
-	def register_driver(self, interface_name, driver_name, driver):
+	def register(self, interface_name, driver_name, driver):
 		self.interfaces[interface_name].add_driver(driver_name, driver)
 		
 	def __getattr__(self, key):
