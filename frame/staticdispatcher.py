@@ -63,8 +63,7 @@ class StaticDispatcher(object):
 		for i in self.static_map:
 			self.static_map[i] = os.path.abspath(self.static_map[i])
 			
-	def read_file(self, filepath):
-		f = open(filepath, 'r')
+	def read_file(self, f):
 		data = f.read(4096)
 		while data:
 			yield data
@@ -79,14 +78,16 @@ class StaticDispatcher(object):
 		:param return: Returns a :class:`frame.response.Response` with the appropriate
 			content-type, body, etc.
 		'''
+		
 		for key, value in self.static_map.items():
-			uri = environ['PATH_INFO']
-
+			# Fix trouble caused by multiple preceeding '/'
+			uri = '/%s' % environ['PATH_INFO'].lstrip('/')
+			
 			if uri.startswith(key):
 				uri = uri[len(key):]
 				uri = uri.lstrip('/')
 
-				file_path = os.path.join(value, uri)
+				file_path = os.path.join(value, uri).rstrip('/')
 				trash, extension = os.path.splitext(file_path)
 				
 				headers = dict(config.response.default_headers)
@@ -97,7 +98,7 @@ class StaticDispatcher(object):
 					except KeyError:
 						headers['Content-Type'] = 'application/octet-stream'
 					try:
-						response_body = self.read_file(file_path)
+						response_body = self.read_file(open(file_path, 'r'))
 					except EnvironmentError:
 						raise Error401
 

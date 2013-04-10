@@ -100,11 +100,10 @@ class App(Singleton):
 		# A variable to store whether or not _prep_start has been run
 		self._prepped = False
 		
-		self.load_modules()
-		
 	def load_modules(self):
 		import pkg_resources
 		for entrypoint in pkg_resources.iter_entry_points('frame'):
+			logger.log_info("Loading '%s' module..." % entrypoint.name)
 			module = entrypoint.load()
 			module(self)
 		
@@ -364,6 +363,9 @@ class App(Singleton):
 		
 		# Initialize dispatcher
 		self.dispatcher = self.drivers.dispatcher.current(self)
+		
+		# Load modules
+		self.load_modules()
 		
 		# Signal that the application has been prepped
 		self._prepped = True
