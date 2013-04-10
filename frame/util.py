@@ -267,7 +267,10 @@ def load_driver(driver_type, name, class_name=True):
 	return getattr(mod, name)
 	
 
-def register_driver(driver_type, name, driver):
+def register_driver(driver_type, name, driver, class_name=True):
 	from importlib import import_module
 	mod = import_module('frame.%ss' % driver_type)
-	setattr(mod, '%s%s' % (name.title(), driver_type.title()), driver)
+	if class_name:
+		setattr(mod, '%s%s' % (name.title(), driver_type.title()), driver)
+	else:
+		setattr(mod, name, driver)

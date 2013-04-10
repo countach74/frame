@@ -22,6 +22,9 @@ from frame.server.worker import HTTPQueue
 # Import config
 from frame._config import config
 
+# Import necessary exceptions
+from frame.errors import InvalidFD
+
 
 def parse_body(request):
 	try:
@@ -44,7 +47,12 @@ class Connection(object):
 		self.request_headers = None
 
 	def fileno(self):
-		return self.socket.fileno()
+		try:
+			os.fstat(self.socket.fileno())
+		except Exception:
+			raise InvalidFD(self)
+		else: 
+			return self.socket.fileno()
 
 	def handle_connect(self):
 		pass
@@ -186,11 +194,15 @@ class Connection(object):
 		self.socket.shutdown(socket.SHUT_RDWR)
 
 	def close(self):
+		# Deprecated in favor of using e_list
 		self.socket.close()
+		
 		if self in self.server.r_list:
 			self.server.r_list.remove(self)
 		if self in self.server.w_list:
 			self.server.w_list.remove(self)
+		if self in self.server.e_list:
+			self.server.e_list.remove(self)
 
 
 class HTTPServer(object):
@@ -251,6 +263,13 @@ class HTTPServer(object):
 			except select.error:
 				r_ready, w_ready, e_ready = [], [], []
 				self.running = False
+			except InvalidFD, e:
+				# In this case, a socket has closed prematurely; handle it gracefully and move on
+				conn = e.args[0]
+				for i in (self.r_list, self.w_list, self.e_list):
+					if conn in i:
+						i.remove(conn)
+				r_ready, w_ready, e_ready = [], [], []
 
 			for i in r_ready:
 				if i is self.socket:

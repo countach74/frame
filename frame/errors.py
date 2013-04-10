@@ -173,3 +173,7 @@ class SessionSaveError(Exception):
 	Session failed to save.
 	'''
 	pass
+
+	
+class InvalidFD(Exception):
+	pass
