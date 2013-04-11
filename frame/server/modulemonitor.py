@@ -34,12 +34,14 @@ class ModuleMonitor(threading.Thread):
 				new_stats = self.stat_modules()
 				if not self.compare_stats(old_stats, new_stats):
 					logger.log_info("File changed, reloading server...")
-					self.server.stop()
-					old_stats = new_stats
-					args = ['python'] + list(sys.argv) + [os.environ]
-					os.execle('/usr/bin/env', '', *args)
+					self.restart_app(self.server.stop)
 				old_stats = new_stats
 			time.sleep(1)
+			
+	def restart_app(self, callback):
+		callback()
+		args = list(sys.argv) + [os.environ]
+		os.execle(sys.executable, '', *args)
 
 	def stopped(self):
 		return self._stop.is_set()

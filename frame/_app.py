@@ -8,22 +8,11 @@ from jinja2 import Environment, ChoiceLoader, PackageLoader, FileSystemLoader
 import os
 import sys
 import sessions
-import mimetypes
 import types
 from threading import current_thread, RLock
 
 # For jinja2 toolset
 from toolset import toolset
-
-# Import default preprocessors
-#from preprocessors import form_url_encoder, form_json_encoder, form_multipart_encoder
-
-from partialviews import PartialViews
-
-# Needed for loading ORM drivers
-import orm
-import orm.datatypes
-import forms
 
 # Import StaticDispatcher to retrieve static files
 from staticdispatcher import StaticDispatcher
@@ -63,11 +52,6 @@ class App(Singleton):
 
 		# Jinja2 environment placeholder
 		self.environment = None
-		'''
-		self.environment = Environment(loader=ChoiceLoader([
-			FileSystemLoader(template_dir),
-			PackageLoader('frame', 'templates')]))
-		'''
 		
 		# Store data for each thread indiviually
 		self.thread_data = {}
@@ -77,9 +61,6 @@ class App(Singleton):
 		
 		self.drivers = self.setup_driver_database()
 			
-		# Setup partial views object
-		self.partial_views = PartialViews(self)
-
 		# Setup session interface
 		#self.session_interface = sessions.SessionInterface(self)
 		
@@ -89,11 +70,6 @@ class App(Singleton):
 		
 		self.config = config
 
-		# Setup ORM stuff
-		forms.BasicForm._environment = self.environment
-		orm.datatypes.CustomType._environment = self.environment
-		self.orm_drivers = orm.available_drivers
-		
 		# A global lock for the application
 		self.lock = RLock()
 		

@@ -251,7 +251,13 @@ class HTTPServer(object):
 		signal.signal(signal.SIGINT, self._handle_signal)
 
 	def run(self):
-		self.bind_socket()
+		try:
+			self.bind_socket()
+		except socket.error, e:
+			logger.log_error("Could not start HTTP Server: %s" % e.args[1])
+			self.worker_queue.stop()
+			sys.exit(1)
+			
 		self.setup_signal_handlers()
 		
 		if self.auto_reload:
