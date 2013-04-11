@@ -15,8 +15,6 @@ class ModuleMonitor(threading.Thread):
 		self.server = server
 		self.interval = interval
 		self._stop = threading.Event()
-		
-		self.path = os.environ['_']
 
 		threading.Thread.__init__(self)
 
@@ -34,14 +32,14 @@ class ModuleMonitor(threading.Thread):
 				new_stats = self.stat_modules()
 				if not self.compare_stats(old_stats, new_stats):
 					logger.log_info("File changed, reloading server...")
-					self.restart_app(self.server.stop)
+					self.server.stop()
+					self.restart_app()
 				old_stats = new_stats
 			time.sleep(1)
 			
-	def restart_app(self, callback):
-		callback()
-		args = list(sys.argv) + [os.environ]
-		os.execle(sys.executable, '', *args)
+	def restart_app(self):
+		python = sys.executable
+		os.execl(python, python, *sys.argv)
 
 	def stopped(self):
 		return self._stop.is_set()

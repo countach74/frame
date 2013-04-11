@@ -15,7 +15,5 @@ class Root(frame.Controller):
 
 frame.routes.expose('root', '/')
 
-frame.config.static_map['/passwd'] = '/etc/passwd'
-
 if __name__ == '__main__':
 	frame.start_http()

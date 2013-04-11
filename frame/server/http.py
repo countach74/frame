@@ -47,11 +47,14 @@ class Connection(object):
 		self.request_headers = None
 
 	def fileno(self):
-		try:
-			os.fstat(self.socket.fileno())
-		except Exception:
-			raise InvalidFD(self)
-		else: 
+		if os.name == 'posix':
+			try:
+				os.fstat(self.socket.fileno())
+			except Exception:
+				raise InvalidFD(self)
+			else: 
+				return self.socket.fileno()
+		else:
 			return self.socket.fileno()
 
 	def handle_connect(self):
@@ -268,7 +271,7 @@ class HTTPServer(object):
 		while self.running:
 			try:
 				r_ready, w_ready, e_ready = select.select(self.r_list, self.w_list, self.e_list, 0.1)
-			except select.error:
+			except (select.error, socket.error):
 				r_ready, w_ready, e_ready = [], [], []
 				self.running = False
 			except InvalidFD, e:
