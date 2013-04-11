@@ -346,11 +346,6 @@ class App(Singleton):
 		# Signal that the application has been prepped
 		self._prepped = True
 			
-	def daemonize(self, host='127.0.0.1', port=8080, ports=None, server_type='fcgi', *args, **kwargs):
-		from daemonize import daemonize
-		
-		daemonize(self, host, port, ports, server_type, *args, **kwargs)
-
 	def start_fcgi(self, *args, **kwargs):
 		'''
 		Start the Flup FastCGI/WSGIServer interface. Any options passed to this method are

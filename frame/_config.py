@@ -103,7 +103,6 @@ config = DotDict({
 	
 	'response': {
 		'default_headers': {
-			'Connection': 'close',
 			'Content-Type': 'text/html',
 			'Server': 'Frame/0.1a',
 		}

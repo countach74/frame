@@ -13,9 +13,6 @@ setup(
 	packages=[
 		'frame',
 		'frame.server',
-		'frame.orm',
-		'frame.orm.drivers',
-		'frame.orm.drivers.mongo',
 		'frame.testsuite',
 	],
 	package_data={
