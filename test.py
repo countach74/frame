@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import frame
+from frame.util import FileLogger
 from wsgiref.simple_server import make_server
 
 class Root(frame.Controller):

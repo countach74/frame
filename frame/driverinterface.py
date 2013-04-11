@@ -1,16 +1,16 @@
-from errors import SessionLoadError
-from _config import config
-
-# Import base drivers
-from sessions import MemcacheSession, MemorySession, FileSession, MysqlSession
-from postprocessors import deflate, handle_head_request, add_last_modified, jsonify
-from preprocessors import (form_url_decoder, form_json_decoder, form_multipart_decoder,
-	handle_query_string)
-from dispatchers import RoutesDispatcher
-
-
 class DriverInterface(dict):
+	'''
+	A glorified dictionary to store the drivers. Provides some hooks to customize how the
+	various drivers should be instantiated and used.
+	'''
 	def __init__(self, database, drivers={}, config=None):
+		'''
+		Initialize.
+		
+		:param database: The :class:`DriverDatabase`
+		:param drivers: Any drivers that should be added immediately
+		:param config: A config directive to use; optional
+		'''
 		self.database = database
 		self.config = config
 		
@@ -26,15 +26,48 @@ class DriverInterface(dict):
 		return "<DriverInterface(%s)>" % ', '.join(self.keys())
 		
 	def load_driver(self, name):
+		'''
+		Loads the specified driver (calls :meth:`init`).
+		
+		:param name: The name of the driver to load
+		:return: An instantiated driver
+		'''
 		return self.init(self[name])
 		
 	def add_driver(self, name, driver):
+		'''
+		Adds a driver to the interface. This is what :meth:`DriverDatabase.register` calls
+		indirectly. There really isn't a need to use this directly and you probably
+		shouldn't (it may end up being deprecated).
+		
+		:param name: What to call the driver
+		:param driver: The driver
+		'''
 		self[name] = driver
 		
 	def init(self, driver):
+		'''
+		A hook to instruct the interface how to instantiate the driver.
+		
+		The default simply returns the interface called with no arguments. If a driver
+		requires more information than this on instantiation, you could do something like
+		this::
+		
+			def init(self, driver):
+				return driver(frame.app, 'hello world')
+				
+		... or whatever.
+		
+		:param driver: The driver to instantiate
+		:return: An instantiated driver
+		'''
 		return driver()
 		
 	def load_current(self):
+		'''
+		Attempts to guess the currently loaded driver, if a config directive was given and
+		has a 'driver' key.
+		'''
 		if self.config and 'driver' in self.config:
 			return self.load_driver(self.config.driver)
 		else:
@@ -42,88 +75,10 @@ class DriverInterface(dict):
 		
 	@property
 	def current(self):
+		'''
+		Like :meth:`load_current` only doesn't instantiate the driver.
+		'''
 		if self.config and 'driver' in self.config:
 			return self[self.config.driver]
 		else:
 			raise AttributeError("No driver config specified or config lacks 'driver' item")
-			
-
-class DriverDatabase(object):
-	def __init__(self, app):
-		self.app = app
-		self.interfaces = {}
-		
-	def add_interface(self, interface_name, interface, drivers={}, config=None):
-		self.interfaces[interface_name] = interface(self, drivers, config)
-		
-	def register(self, interface_name, driver_name, driver):
-		self.interfaces[interface_name].add_driver(driver_name, driver)
-		
-	def __getattr__(self, key):
-		try:
-			return self.interfaces[key]
-		except KeyError:
-			raise AttributeError(key)
-		
-	def __repr__(self):
-		return "<DriverDatabase(%s)>" % ', '.join(self.interfaces.keys())
-
-
-class SessionInterface(DriverInterface):
-	def __init__(self, *args, **kwargs):
-		DriverInterface.__init__(self, *args, **kwargs)
-		
-		self.update({
-			'memcache': MemcacheSession,
-			'memory': MemorySession,
-			'file': FileSession,
-			'mysql': MysqlSession
-		})
-		
-	def init(self, driver):
-		try:
-			return driver(self.database.app, self)
-		except SessionLoadError:
-			return driver(self.database.app, self, force=True)
-			
-	# Alias to match old session interface
-	get_session = DriverInterface.load_current
-		
-	def save_session(self, session):
-		session._save(session._key, session._data)
-		
-	
-class PostprocessorInterface(DriverInterface):
-	def __init__(self, *args, **kwargs):
-		DriverInterface.__init__(self, *args, **kwargs)
-		
-		self.update({
-			'deflate': deflate,
-			'handle_head_request': handle_head_request,
-			'add_last_modified': add_last_modified,
-			'jsonify': jsonify
-		})
-	
-class PreprocessorInterface(DriverInterface):
-	def __init__(self, *args, **kwargs):
-		DriverInterface.__init__(self, *args, **kwargs)
-		
-		self.update({
-			'form_url_decoder': form_url_decoder,
-			'form_json_decoder': form_json_decoder,
-			'form_multipart_decoder': form_multipart_decoder,
-			'handle_query_string': handle_query_string
-		})
-		
-		
-class DispatcherInterface(DriverInterface):
-	def __init__(self, *args, **kwargs):
-		DriverInterface.__init__(self, *args, **kwargs)
-		
-		self.update({
-			'routes': RoutesDispatcher
-		})
-		
-	@property
-	def current(self):
-		return self[self.config.dispatcher]

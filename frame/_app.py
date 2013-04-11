@@ -22,9 +22,10 @@ from _config import config
 
 # Import logger
 from _logger import logger
+
 from util import truncate, Singleton
 
-import driverinterface
+import driverdatabase
 
 
 class App(Singleton):
@@ -65,8 +66,8 @@ class App(Singleton):
 		#self.session_interface = sessions.SessionInterface(self)
 		
 		# Setup pre and post processor lists
-		self.pre_processors = []
-		self.post_processors = []
+		self.preprocessors = []
+		self.postprocessors = []
 		
 		self.config = config
 
@@ -84,27 +85,27 @@ class App(Singleton):
 			module(self)
 		
 	def setup_driver_database(self):
-		drivers = driverinterface.DriverDatabase(self)
+		drivers = driverdatabase.DriverDatabase(self)
 		
 		drivers.add_interface(
 			'session',
-			driverinterface.SessionInterface,
+			driverdatabase.SessionInterface,
 			config=config.sessions)
 			
 		# Add postprocessor interface
 		drivers.add_interface(
 			'postprocessor',
-			driverinterface.PostprocessorInterface)
+			driverdatabase.PostprocessorInterface)
 			
 		# Add preprocessor interface
 		drivers.add_interface(
 			'preprocessor',
-			driverinterface.PreprocessorInterface)
+			driverdatabase.PreprocessorInterface)
 		
 		# Add routes interface
 		drivers.add_interface(
 			'dispatcher',
-			driverinterface.DispatcherInterface,
+			driverdatabase.DispatcherInterface,
 			config=config.application)
 		
 		return drivers
@@ -152,14 +153,6 @@ class App(Singleton):
 	@response.deleter
 	def response(self):
 		del(self.thread_data[current_thread()]['response'])
-		
-	@property
-	def orm(self):
-		return self.orm_drivers[config.orm.driver]
-
-	@property
-	def Connection(self):
-		return self.orm.Connection
 		
 	@property
 	def current_controller(self):
@@ -229,7 +222,7 @@ class App(Singleton):
 			self.environment.globals['session'] = self.session
 			self.environment.globals['tools'] = toolset
 
-			for i in self.pre_processors:
+			for i in self.preprocessors:
 				try:
 					i(self.request, response)
 				except Exception, e:
@@ -292,7 +285,7 @@ class App(Singleton):
 
 		else:
 			# Apply post processors
-			for i in self.post_processors:
+			for i in self.postprocessors:
 				i(self.request, response)
 
 			#response_body = str(response_body)
@@ -319,11 +312,11 @@ class App(Singleton):
 		
 		logger.log_info("Preparing WSGI Application...")
 		
-		for i in config.pre_processors:
-			self.pre_processors.append(self.drivers.preprocessor[i])
+		for i in config.preprocessors:
+			self.preprocessors.append(self.drivers.preprocessor[i])
 		
-		for i in config.post_processors:
-			self.post_processors.append(self.drivers.postprocessor[i])
+		for i in config.postprocessors:
+			self.postprocessors.append(self.drivers.postprocessor[i])
 
 		for mapping, path in config.static_map.items():
 			logger.log_info("Mapping static directory: '%s' => '%s'" % (

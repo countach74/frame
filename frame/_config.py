@@ -57,14 +57,14 @@ config = DotDict({
 		'filters': {}
 	},
 	
-	'pre_processors': [
+	'preprocessors': [
 		'handle_query_string',
 		'form_url_decoder',
 		'form_json_decoder',
 		'form_multipart_decoder',
 	],
 	
-	'post_processors': [
+	'postprocessors': [
 		'handle_head_request',
 		'add_last_modified'
 	],
@@ -108,3 +108,7 @@ config = DotDict({
 		}
 	}
 })
+
+
+if __name__ == '__main__':
+	config.prettify()

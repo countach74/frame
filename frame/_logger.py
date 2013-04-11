@@ -12,7 +12,7 @@ For example::
 	# Define configuration directives
 	frame.config.logger.mysql = {'connection': None}
 
-	class MysqlLogger(_logger.Logger):
+	class MysqlLogger(frame._logger.Logger):
 		def __init__(self, connection):
 			self.connection = connection
 			
@@ -45,6 +45,7 @@ import datetime
 from _config import config
 from pytz import timezone
 import os
+from driverinterface import DriverInterface
 
 
 class Logger(object):
@@ -237,28 +238,30 @@ class ProductionLogger(Logger):
 		self.syslog.syslog(priority, message)
 		
 		
-class LogInterface(object):
-	'''
-	A simple log interface that allows the active logger to be set dynamically via config
-	directives.
-	'''
-	
-	def __init__(self):
+class LogInterface(DriverInterface):
+	def __init__(self, *args, **kwargs):
+		DriverInterface.__init__(self, *args, **kwargs)
+		
+		self.update({
+			'stdout': StdoutLogger,
+			'null': NullLogger,
+			'production': ProductionLogger
+		})
+		
 		self.logger = None
 		
-	def setup_logger(self):
-		if not self.logger:
-			driver = config.logger.driver
-			options = config.logger[driver]
-			self.logger = globals()[driver.title() + 'Logger'](**options)
-			
 	def __getattr__(self, key):
 		if key.startswith('log_'):
-			self.setup_logger()
-			attr = getattr(self.logger, key)
-			return attr
+			self.load_current()
+			return getattr(self.logger, key)
 		else:
-			return object.__getattr__(self, key)
-	
-
-logger = LogInterface()
+			raise AttributeError(key)
+			
+	def init(self, driver):
+		if not self.logger:
+			options = self.config[self.config.driver]
+			self.logger = driver(**options)
+		return self.logger
+		
+		
+logger = LogInterface(None, config=config.logger)
