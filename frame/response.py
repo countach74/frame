@@ -120,6 +120,7 @@ class Response(object):
 		if result is None or isinstance(result, dict):
 			method_name = self.action.__name__
 			
+			'''  Was a bad idea, so trying without...
 			if hasattr(self.action.im_self, '__resource__'):
 				template_dir = self.action.im_self.__resource__['template_dir']
 				template_path = os.path.join(template_dir, method_name + '.html')
@@ -128,11 +129,12 @@ class Response(object):
 					result if result else {})
 					
 			else:
-				template_dir = self.action.im_self.__class__.__name__.lower()
-				template_path = os.path.join(template_dir, method_name + '.html')
-				
-				result = self.action.im_self.get_template(template_path).render(
-					result or {})
+			'''
+			template_dir = self.action.im_self.__class__.__name__.lower()
+			template_path = os.path.join(template_dir, method_name + '.html')
+			
+			result = self.action.im_self.get_template(template_path).render(
+				result or {})
 
 		self._body = result
 

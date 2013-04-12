@@ -106,10 +106,7 @@ def import_all_modules(origin_file):
 	
 	
 def make_resource(controller, path):
-	template_dir = re.sub("(/{.*?})", '', path)
-	
-	while template_dir.startswith('/'):
-		template_dir = template_dir[1:]
+	template_dir = re.sub("(/{.*?})", '', path).lstrip('/')
 	
 	controller.__resource__ = {
 		'base_uri': path,

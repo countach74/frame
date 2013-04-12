@@ -296,7 +296,8 @@ class Routes(Singleton):
 				controller='%s#%s' % (controller, i['action']),
 				conditions={'method': i['method']})
 				
-		make_resource(self.controllers[controller], mount_point)
+		# Was a bad idea, trying without...
+		#make_resource(self.controllers[controller], mount_point)
 				
 
 routes = Routes()
