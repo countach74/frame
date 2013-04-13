@@ -15,6 +15,14 @@ setup(
 		'frame.server',
 		'frame.testsuite',
 	],
+	entry_points={
+		'frame.drivers': [
+			'session = frame.sessions:register_driver'
+		],
+		'frame.config': [
+			'session = frame.sessions:register_config'
+		]
+	},
 	package_data={
 		'frame': [
 			'templates/*.html',

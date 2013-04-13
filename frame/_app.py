@@ -77,21 +77,31 @@ class App(Singleton):
 		
 		# A variable to store whether or not _prep_start has been run
 		self._prepped = False
+
+		# Load config entry points
+		self.load_config()
 		
 	def load_drivers(self):
-		import pkg_resources
-		for entry_point in pkg_resources.iter_entry_points('frame.drivers'):
-			logger.log_info("Loading '%s' module..." % entry_point.name)
-			module = entrypoint.load()
-			module(self)
-		
+		from pkg_resources import iter_entry_points
+		for entry_point in iter_entry_points('frame.drivers'):
+			logger.log_info("Loading '%s' driver..." % entry_point.name)
+			register_driver = entry_point.load()
+			register_driver(self.drivers)
+
+	def load_config(self):
+		from pkg_resources import iter_entry_points
+		for entry_point in iter_entry_points('frame.config'):
+			register_config = entry_point.load()
+			register_config(config)
+
 	def setup_driver_database(self):
 		drivers = driverdatabase.DriverDatabase(self)
 		
-		drivers.add_interface(
-			'session',
-			driverdatabase.SessionInterface,
-			config=config.sessions)
+		# Add session interface
+		#drivers.add_interface(
+		#	'session',
+		#	driverdatabase.SessionInterface,
+		#	config=config.sessions)
 			
 		# Add postprocessor interface
 		drivers.add_interface(
@@ -113,7 +123,6 @@ class App(Singleton):
 		drivers.add_interface(
 			'hook',
 			driverdatabase.DriverInterface,
-			drivers={'session': sessions.SessionHook},
 			config=config.hooks)
 		
 		return drivers
@@ -122,19 +131,6 @@ class App(Singleton):
 		thread = current_thread()
 		if thread not in self.thread_data:
 			self.thread_data[thread] = {}
-		
-	@property
-	def session(self):
-		return self.thread_data[current_thread()]['session']
-	
-	@session.setter
-	def session(self, value):
-		self._setup_thread()
-		self.thread_data[current_thread()]['session'] = value
-		
-	@session.deleter
-	def session(self):
-		del(self.thread_data[current_thread()]['session'])
 		
 	@property
 	def request(self):
@@ -204,7 +200,7 @@ class App(Singleton):
 			hooks = map(
 				lambda x: self.drivers.hook.load_driver(x, self, match.im_self),
 				config.hooks)
-					
+
 			response = Response(self, match, params)
 			
 			with contextlib.nested(*hooks):

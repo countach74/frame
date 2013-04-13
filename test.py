@@ -51,11 +51,13 @@ def remove_hop_by_hop(request, response):
 		if header in response.headers:
 			del(response.headers[header])
 
+
 frame.routes.expose('root', '/')
 frame.routes.resource('users')
 frame.routes.resource('moderators')
 frame.routes.resource('friends', '/users/{user}/friends')
 frame.routes.resource('friends', '/moderators/{user}/friends')
 
+
 if __name__ == '__main__':
-	frame.app.start_http()
+	frame.app.start_http('0.0.0.0')

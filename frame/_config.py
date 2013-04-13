@@ -2,6 +2,7 @@ from dotdict import DotDict
 from jinja2 import PackageLoader
 import sys
 import os
+from pkg_resources import iter_entry_points
 
 
 # Frame's library path
@@ -10,39 +11,6 @@ __app_name = sys.argv[0]
 
 
 config = DotDict({
-	'sessions': {
-		'driver': 'memory',
-		'cookie_name': 'FrameSession',
-		'expires': 168,
-		'cleanup_frequency': 30,
-		'enabled': True,
-		
-		'memcache': {
-			'prefix': 'FRAME_SESSION::',
-			'connection': None,
-			'servers': ['127.0.0.1:11211'],
-		},
-		
-		'memory': {
-		},
-		'file': {
-			'directory': 'sessions',
-		},
-		'mysql': {
-			'host': 'localhost',
-			'port': 3306,
-			'connection': None,
-			'database': None,
-			'user': None,
-			'password': None,
-			'table': 'frame_sessions'
-		}
-	},
-	
-	'orm': {
-		'driver': None
-	},
-	
 	'application': {
 		'name': 'Frame (%s)' % __app_name,
 		'strip_trailing_slash': True,
@@ -69,7 +37,7 @@ config = DotDict({
 		'add_last_modified'
 	],
 	
-	'hooks': ['session'],
+	'hooks': [],
 	
 	'timezone': 'America/Los_Angeles',
 	
@@ -111,4 +79,9 @@ config = DotDict({
 
 
 if __name__ == '__main__':
+	for entry_point in iter_entry_points('frame.config'):
+		register_config = entry_point.load()
+		register_config(config)
+
 	config.prettify()
+

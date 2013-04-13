@@ -37,7 +37,6 @@ from errors import SessionLoadError
 from _config import config
 
 # Import base drivers
-from sessions import MemcacheSession, MemorySession, FileSession, MysqlSession
 from postprocessors import deflate, handle_head_request, add_last_modified, jsonify
 from preprocessors import (form_url_decoder, form_json_decoder, form_multipart_decoder,
 	handle_query_string)
@@ -100,30 +99,6 @@ class DriverDatabase(Singleton):
 		
 	def __repr__(self):
 		return "<DriverDatabase(%s)>" % ', '.join(self.interfaces.keys())
-
-
-class SessionInterface(DriverInterface):
-	def __init__(self, *args, **kwargs):
-		DriverInterface.__init__(self, *args, **kwargs)
-		
-		self.update({
-			'memcache': MemcacheSession,
-			'memory': MemorySession,
-			'file': FileSession,
-			'mysql': MysqlSession
-		})
-		
-	def init(self, driver):
-		try:
-			return driver(self.database.app, self)
-		except SessionLoadError:
-			return driver(self.database.app, self, force=True)
-			
-	# Alias to match old session interface
-	get_session = DriverInterface.load_current
-		
-	def save_session(self, session):
-		session._save(session._key, session._data)
 		
 	
 class PostprocessorInterface(DriverInterface):

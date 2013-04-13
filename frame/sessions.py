@@ -15,6 +15,38 @@ from _config import config
 import os
 from threading import RLock
 from _logger import logger
+from driverinterface import DriverInterface
+from threading import current_thread
+
+
+sessions_config = DotDict({
+	'driver': 'memory',
+	'cookie_name': 'FrameSession',
+	'expires': 168,
+	'cleanup_frequency': 30,
+	
+	'memcache': {
+		'prefix': 'FRAME_SESSION::',
+		'connection': None,
+		'servers': ['127.0.0.1:11211'],
+	},
+
+	'memory': {},
+
+	'file': {
+		'directory': 'sessions',
+	},
+
+	'mysql': {
+		'host': 'localhost',
+		'port': 3306,
+		'connection': None,
+		'database': None,
+		'table': 'frame_sessions',
+		'user': None,
+		'password': None,
+	},
+})
 
 
 class Session(object):
@@ -454,3 +486,56 @@ class SessionHook(object):
 		
 	def __exit__(self, e_type, e_value, e_tb):
 		self.app.drivers.session.save_session(self.app.session)
+		
+	
+class SessionInterface(DriverInterface):
+	def __init__(self, *args, **kwargs):
+		DriverInterface.__init__(self, *args, **kwargs)
+		
+		self.update({
+			'memcache': MemcacheSession,
+			'memory': MemorySession,
+			'file': FileSession,
+			'mysql': MysqlSession
+		})
+		
+	def init(self, driver):
+		try:
+			return driver(self.database.app, self)
+		except SessionLoadError:
+			return driver(self.database.app, self, force=True)
+			
+	# Alias to match old session interface
+	get_session = DriverInterface.load_current
+		
+	def save_session(self, session):
+		session._save(session._key, session._data)
+
+
+def register_config(conf):
+	conf.sessions = sessions_config
+	conf.hooks.append('session')
+
+
+def register_driver(drivers):
+	drivers.register('hook', 'session', SessionHook)
+
+	drivers.add_interface(
+		'session',
+		SessionInterface,
+		config=sessions_config)
+
+	app = drivers.app
+	App = app.__class__
+
+	def get_session(self):
+		return app.thread_data[current_thread()]['session']
+
+	def set_session(self, value):
+		app._setup_thread()
+		app.thread_data[current_thread()]['session'] = value
+
+	def del_session(self):
+		del(self.thread_data[current_thread()]['session'])
+
+	App.session = property(get_session, set_session, del_session)
