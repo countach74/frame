@@ -5,8 +5,8 @@ import frame
 
 class Root(frame.Controller):
 	def save(self, name='bob'):
-		if 'name' not in self.session:
-			self.session['name'] = name
+		self.session['name'] = name
+		return 'name saved: %s' % name
 
 	def get(self):
 		try:
@@ -20,4 +20,4 @@ frame.routes.connect('/save/{name}', 'root#save')
 
 
 if __name__ == '__main__':
-	frame.start_fcgi()
+	frame.start_http()

@@ -10,6 +10,7 @@ import sys
 import sessions
 import types
 from threading import current_thread, RLock
+from pkg_resources import iter_entry_points
 
 # For jinja2 toolset
 from toolset import toolset
@@ -82,14 +83,12 @@ class App(Singleton):
 		self.load_config()
 		
 	def load_drivers(self):
-		from pkg_resources import iter_entry_points
 		for entry_point in iter_entry_points('frame.drivers'):
 			logger.log_info("Loading '%s' driver..." % entry_point.name)
 			register_driver = entry_point.load()
 			register_driver(self.drivers)
 
 	def load_config(self):
-		from pkg_resources import iter_entry_points
 		for entry_point in iter_entry_points('frame.config'):
 			register_config = entry_point.load()
 			register_config(config)
@@ -97,12 +96,6 @@ class App(Singleton):
 	def setup_driver_database(self):
 		drivers = driverdatabase.DriverDatabase(self)
 		
-		# Add session interface
-		#drivers.add_interface(
-		#	'session',
-		#	driverdatabase.SessionInterface,
-		#	config=config.sessions)
-			
 		# Add postprocessor interface
 		drivers.add_interface(
 			'postprocessor',
@@ -196,7 +189,6 @@ class App(Singleton):
 				if key in ('controller', 'action', 'method'):
 					del(params[key])
 					
-					
 			hooks = map(
 				lambda x: self.drivers.hook.load_driver(x, self, match.im_self),
 				config.hooks)
@@ -249,9 +241,6 @@ class App(Singleton):
 			# Apply post processors
 			for i in self.postprocessors:
 				i(self.request, response)
-
-			#response_body = str(response_body)
-			#headers['Content-Length'] = str(len(response_body))
 
 			# Deliver the goods
 			start_response(response.status, response.headers.items())
