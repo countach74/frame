@@ -42,13 +42,26 @@ on a normal use-case are available from directly within the
 '''
 
 
+import sys
 from _app import app
 from _routes import routes
 from _config import config
 from _logger import logger
 from controller import Controller
 from errors import *
+from dotdict import DotDict
+from pkg_resources import iter_entry_points
 
 
 start_http = app.start_http
 start_fcgi = app.start_fcgi
+
+
+# Module registry
+modules = DotDict()
+
+def load_module(name, *args, **kwargs):
+	for entry_point in (i for i in iter_entry_points('frame.modules') if i.name == name):
+		init = entry_point.load()
+		result = init(app, *args, **kwargs)
+		modules[entry_point.name] = result if result else sys.modules[init.__module__]

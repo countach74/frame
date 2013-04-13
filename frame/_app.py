@@ -26,6 +26,7 @@ from _logger import logger
 from util import truncate, Singleton
 
 import driverdatabase
+import contextlib
 
 
 class App(Singleton):
@@ -77,10 +78,10 @@ class App(Singleton):
 		# A variable to store whether or not _prep_start has been run
 		self._prepped = False
 		
-	def load_modules(self):
+	def load_drivers(self):
 		import pkg_resources
-		for entrypoint in pkg_resources.iter_entry_points('frame'):
-			logger.log_info("Loading '%s' module..." % entrypoint.name)
+		for entry_point in pkg_resources.iter_entry_points('frame.drivers'):
+			logger.log_info("Loading '%s' module..." % entry_point.name)
 			module = entrypoint.load()
 			module(self)
 		
@@ -102,11 +103,17 @@ class App(Singleton):
 			'preprocessor',
 			driverdatabase.PreprocessorInterface)
 		
-		# Add routes interface
+		# Add dispatcher interface
 		drivers.add_interface(
 			'dispatcher',
 			driverdatabase.DispatcherInterface,
 			config=config.application)
+			
+		# Add hooks interface
+		drivers.add_interface(
+			'hook',
+			driverdatabase.DriverInterface,
+			config=config.hooks)
 		
 		return drivers
 		
@@ -196,27 +203,17 @@ class App(Singleton):
 				if key in ('controller', 'action', 'method'):
 					del(params[key])
 					
-			# Process hook entry points
-			for hook in config.hooks:
-				try:
-					hook.enter(match.im_self)
-				except Exception, e:
-					raise Error500
-				
-			# Process hook exit points
-			def exit_hooks():
-				for hook in config.hooks:
-					try:
-						hook.exit(match.im_self)
-					except Exception, e:
-						raise Error500
-
-			response = Response(self, match, params)
+					
+			hooks = map(
+				lambda x: self.drivers.hook.load_driver(x, match.im_self),
+				config.hooks)
+					
+			with contextlib.nested(*hooks):
+					response = Response(self, match, params)
 			
 			try:
 				self.session = self.drivers.session.get_session()
 			except Exception, e:
-				exit_hooks()
 				raise Error500
 
 			self.environment.globals['session'] = self.session
@@ -232,21 +229,15 @@ class App(Singleton):
 				try:
 					self.drivers.session.save_session(self.session)
 				except Exception, e:
-					exit_hooks()
 					raise Error500
 
 			try:
 				response.render()
 			except HTTPError, e:
-				exit_hooks()
 				save_session()
 				raise e
 			except Exception, e:
-				exit_hooks()
 				raise Error500
-			
-			# Run exit hooks
-			exit_hooks()
 			
 			# Save the session before yielding the response
 			save_session()
@@ -334,7 +325,7 @@ class App(Singleton):
 		self.dispatcher = self.drivers.dispatcher.current(self)
 		
 		# Load modules
-		self.load_modules()
+		self.load_drivers()
 		
 		# Signal that the application has been prepped
 		self._prepped = True

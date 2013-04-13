@@ -25,14 +25,14 @@ class DriverInterface(dict):
 	def __repr__(self):
 		return "<DriverInterface(%s)>" % ', '.join(self.keys())
 		
-	def load_driver(self, name):
+	def load_driver(self, name, *args):
 		'''
 		Loads the specified driver (calls :meth:`init`).
 		
 		:param name: The name of the driver to load
 		:return: An instantiated driver
 		'''
-		return self.init(self[name])
+		return self.init(self[name], *args)
 		
 	def add_driver(self, name, driver):
 		'''
@@ -45,7 +45,7 @@ class DriverInterface(dict):
 		'''
 		self[name] = driver
 		
-	def init(self, driver):
+	def init(self, driver, *args):
 		'''
 		A hook to instruct the interface how to instantiate the driver.
 		
@@ -61,7 +61,7 @@ class DriverInterface(dict):
 		:param driver: The driver to instantiate
 		:return: An instantiated driver
 		'''
-		return driver()
+		return driver(*args)
 		
 	def load_current(self):
 		'''
