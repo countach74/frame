@@ -69,7 +69,7 @@ config = DotDict({
 		'add_last_modified'
 	],
 	
-	'hooks': [],
+	'hooks': ['session'],
 	
 	'timezone': 'America/Los_Angeles',
 	

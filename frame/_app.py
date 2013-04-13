@@ -113,6 +113,7 @@ class App(Singleton):
 		drivers.add_interface(
 			'hook',
 			driverdatabase.DriverInterface,
+			drivers={'session': sessions.SessionHook},
 			config=config.hooks)
 		
 		return drivers
@@ -193,10 +194,6 @@ class App(Singleton):
 		except (TypeError, AttributeError):
 			return self.static_map.match(environ)
 			
-		# Any other errors are unexpected
-		except Exception, e:
-			raise Error500
-
 		# Otherwise, we should be good to handle the request
 		else:
 			for key, value in params.items():
@@ -205,44 +202,17 @@ class App(Singleton):
 					
 					
 			hooks = map(
-				lambda x: self.drivers.hook.load_driver(x, match.im_self),
+				lambda x: self.drivers.hook.load_driver(x, self, match.im_self),
 				config.hooks)
 					
+			response = Response(self, match, params)
+			
 			with contextlib.nested(*hooks):
-					response = Response(self, match, params)
+					for i in self.preprocessors:
+						i(self.request, response)
+					response.render()
 			
-			try:
-				self.session = self.drivers.session.get_session()
-			except Exception, e:
-				raise Error500
-
-			self.environment.globals['session'] = self.session
-			self.environment.globals['tools'] = toolset
-
-			for i in self.preprocessors:
-				try:
-					i(self.request, response)
-				except Exception, e:
-					raise Error500
-				
-			def save_session():
-				try:
-					self.drivers.session.save_session(self.session)
-				except Exception, e:
-					raise Error500
-
-			try:
-				response.render()
-			except HTTPError, e:
-				save_session()
-				raise e
-			except Exception, e:
-				raise Error500
-			
-			# Save the session before yielding the response
-			save_session()
-
-		return response
+			return response
 
 	def __call__(self, environ, start_response):
 		'''
@@ -259,7 +229,12 @@ class App(Singleton):
 			self.lock.release()
 		
 		try:
-			response = self._dispatch(environ)
+			try:
+				response = self._dispatch(environ)
+			except HTTPError, e:
+				raise e
+			except Exception, e:
+				raise Error500
 		except HTTPError, e:
 			e.render(self)
 			response = e.response
@@ -320,6 +295,9 @@ class App(Singleton):
 		self.environment = Environment(loader=ChoiceLoader(loaders))
 		self.environment.globals.update(config.templates.globals)
 		self.environment.filters.update(config.templates.filters)
+		
+		# Add toolset to Jinja2 environment
+		self.environment.globals['tools'] = toolset
 		
 		# Initialize dispatcher
 		self.dispatcher = self.drivers.dispatcher.current(self)

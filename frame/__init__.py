@@ -60,6 +60,9 @@ start_fcgi = app.start_fcgi
 # Module registry
 modules = DotDict()
 
+
+# Load a module by name. Can specify keyword arguments that will be sent off to the
+# module's entry point, if it's setup for them. :)
 def load_module(name, *args, **kwargs):
 	for entry_point in (i for i in iter_entry_points('frame.modules') if i.name == name):
 		init = entry_point.load()

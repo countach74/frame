@@ -8,7 +8,7 @@ please see :ref:`create_session_driver`.
 
 import pickle
 from dotdict import DotDict
-from errors import SessionLoadError, SessionSaveError
+from errors import SessionLoadError, SessionSaveError, Error500
 import datetime
 from uuid import uuid4
 from _config import config
@@ -437,3 +437,20 @@ class MemcacheSession(Session):
 		
 	def expire(self, key):
 		self.db.set(self.prefix + key, '', time=-1)
+		
+		
+class SessionHook(object):
+	def __init__(self, app, controller):
+		self.app = app
+		self.controller = controller
+		
+	def __enter__(self):
+		try:
+			self.app.session = self.app.drivers.session.get_session()
+		except Exception, e:
+			raise Error500
+		
+		self.app.environment.globals['session'] = self.app.session
+		
+	def __exit__(self, e_type, e_value, e_tb):
+		self.app.drivers.session.save_session(self.app.session)
