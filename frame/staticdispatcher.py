@@ -56,8 +56,15 @@ class StaticDispatcher(object):
 		'''
 		self.static_map[key] = os.path.abspath(value)
 
+	def __iter__(self):
+		for i in static_map:
+			yield i
+
 	def __repr__(self):
 		return "<Static Dispatcher: %s>" % self.static_map
+
+	def items(self):
+		return self.static_map.items()
 
 	def _resolve_map(self):
 		for i in self.static_map:

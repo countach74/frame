@@ -3,6 +3,7 @@
 import frame
 from frame.util import FileLogger
 from wsgiref.simple_server import make_server
+from frame.staticgenerator import StaticGenerator
 
 users = [
 	{'username': 'bob'},
@@ -60,4 +61,12 @@ frame.routes.resource('friends', '/moderators/{user}/friends')
 
 
 if __name__ == '__main__':
-	frame.app.start_http('0.0.0.0')
+	sg = StaticGenerator(frame.app, '/home/countach74/blackpulp/staticsite')
+
+	static_paths = (
+		'/',
+		'/users/bob',
+		'/users/bob/friends/jo'
+	)
+
+	map(lambda x: x.save(), sg.generate(static_paths))

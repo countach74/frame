@@ -179,7 +179,9 @@ class App(Singleton):
 		try:
 			match, params = self.dispatcher.handle(environ=environ)
 
-		# If TypeError or AttributeError occurs then no match was found; we should throw a 404.
+		# If TypeError or AttributeError occurs then no match was found; we should check
+		# if the URI matches any static mappings, which will return a 404 response if
+		# no match is found.
 		except (TypeError, AttributeError):
 			return self.static_map.match(environ)
 			
