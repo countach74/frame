@@ -1,8 +1,0 @@
-{% extends 'template.html' %}
-
-{% block main %}
-<h3>Create User</h3>
-
-{{model.make_form('/users', fields=['username', 'password', 'email'])}}
-
-{% endblock %}
