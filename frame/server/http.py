@@ -297,7 +297,6 @@ class HTTPServer(object):
         r_ready, w_ready, e_ready = [], [], []
         self.running = False
       except InvalidFD, e:
-        print "!!!!!!! INVALID FD !!!!!!!!!!!!"
         # In this case, a socket has closed prematurely; handle it gracefully and move on
         conn = e.args[0]
         for i in (self.r_list, self.w_list, self.e_list):
