@@ -49,8 +49,6 @@ class Connection(object):
     
     # Track number of failures for socket
     self.failures = 0
-    
-    self.lock = threading.RLock()
 
   def fileno(self):
     if os.name == 'posix':
@@ -179,8 +177,6 @@ class Connection(object):
       # Send headers
       headers_sent = False
       
-      self.lock.acquire()
-      
       # Send response
       for i in response:
         if not headers_sent:
@@ -192,8 +188,6 @@ class Connection(object):
       
       if self not in self.server.w_list:
         self.server.w_list.append(self)
-      
-      self.lock.release()
 
   def send_headers(self, status, headers):
     self.send("HTTP/1.1 %s\r\n" % status)
@@ -245,7 +239,7 @@ class HTTPServer(object):
     self.chunk_size = chunk_size
     self.max_read = max_read
     self.auto_reload = auto_reload
-
+    
     self.connections = []
     
     # Setup worker queue
@@ -303,6 +297,7 @@ class HTTPServer(object):
         r_ready, w_ready, e_ready = [], [], []
         self.running = False
       except InvalidFD, e:
+        print "!!!!!!! INVALID FD !!!!!!!!!!!!"
         # In this case, a socket has closed prematurely; handle it gracefully and move on
         conn = e.args[0]
         for i in (self.r_list, self.w_list, self.e_list):
@@ -320,9 +315,7 @@ class HTTPServer(object):
           i.handle_read()
 
       for i in w_ready:
-        i.lock.acquire()
         i.handle_write()
-        i.lock.release()
 
       for i in e_ready:
         i.handle_error()
