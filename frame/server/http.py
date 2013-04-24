@@ -24,6 +24,7 @@ from frame._config import config
 
 # Import necessary exceptions
 from frame.errors import InvalidFD
+import time
 
 
 def parse_body(request):
@@ -45,6 +46,9 @@ class Connection(object):
     self.request_body_received = 0
     self.request_body_length = None
     self.request_headers = None
+    
+    # Track number of failures for socket
+    self.failures = 0
 
   def fileno(self):
     if os.name == 'posix':
@@ -64,7 +68,7 @@ class Connection(object):
     try:
       data = self.socket.recv(self.server.chunk_size)
     except socket.error:
-      self.close()
+      self.fail()
       return
       
     if not data:
@@ -105,13 +109,18 @@ class Connection(object):
 
   def handle_write(self):
     data = self.write_buffer.pop(0)
+    
+    if data is None:
+      self.close()
+      return
+    
     try:
       self.socket.send(data)
     except socket.error:
-      self.close()
+      self.fail()
 
-    if not self.write_buffer:
-      self.close()
+    #if not self.write_buffer:
+    #  self.close()
 
   def handle_request(self, request):
     if not request:
@@ -174,6 +183,11 @@ class Connection(object):
           self.send_headers(self.status, self.headers)
           headers_sent = True
         self.send(i)
+        
+      self.write_buffer.append(None)
+      
+      if self not in self.server.w_list:
+        self.server.w_list.append(self)
 
   def send_headers(self, status, headers):
     self.send("HTTP/1.1 %s\r\n" % status)
@@ -187,11 +201,14 @@ class Connection(object):
     self.other = other
 
   def send(self, data):
-    self.write_buffer.append(data)
+    while data:
+      chunk = data[0:self.server.chunk_size]
+      self.write_buffer.append(chunk)
+      data = data[self.server.chunk_size:]
 
     # Make sure connection is part of the write list
-    if self not in self.server.w_list:
-      self.server.w_list.append(self)
+    #if self not in self.server.w_list:
+    #  self.server.w_list.append(self)
 
   def shutdown(self):
     self.socket.shutdown(socket.SHUT_RDWR)
@@ -206,6 +223,11 @@ class Connection(object):
       self.server.w_list.remove(self)
     if self in self.server.e_list:
       self.server.e_list.remove(self)
+      
+  def fail(self):
+    self.failures += 1
+    if self.failures == 5:
+      self.close()
 
 
 class HTTPServer(object):
@@ -218,6 +240,7 @@ class HTTPServer(object):
     self.max_read = max_read
     self.auto_reload = auto_reload
 
+    
     self.connections = []
     
     # Setup worker queue
@@ -270,7 +293,7 @@ class HTTPServer(object):
     
     while self.running:
       try:
-        r_ready, w_ready, e_ready = select.select(self.r_list, self.w_list, self.e_list, 0.1)
+        r_ready, w_ready, e_ready = select.select(self.r_list, self.w_list, self.e_list, 0.01)
       except (select.error, socket.error):
         r_ready, w_ready, e_ready = [], [], []
         self.running = False
