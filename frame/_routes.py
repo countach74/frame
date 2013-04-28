@@ -110,17 +110,9 @@ class Routes(Singleton):
 		self.controllers = {}
 		self.resources = {}
 		self.thread_data = {}
-		
-	'''
-	def __call__(self, route, *args, **kwargs):
-		def wrap(f):
-			#controller = f.im_class
-			self.connect(route, action=f, *args, **kwargs)
-			def wrapped_f(*args2, **kwargs2):
-				return f(*args, **kwargs)
-			return wrapped_f
-		return wrap
-	'''
+
+		# Setup to use sub domains by default
+		self.mapper.sub_domains = True
 		
 	def register_controller(self, controller):
 		'''

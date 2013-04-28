@@ -198,9 +198,9 @@ class App(Singleton):
 			response = Response(self, match, params)
 			
 			with contextlib.nested(*hooks):
-					for i in self.preprocessors:
-						i(self.request, response)
-					response.render()
+				for i in self.preprocessors:
+					i(self.request, response)
+				response.render()
 			
 			return response
 
