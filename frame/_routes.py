@@ -138,6 +138,12 @@ class Routes(Singleton):
 		raw :mod:`routes` match data is returned.
 		'''
 		match = self.mapper.match(*args, **kwargs)
+
+		# Python routes likes to maintain the 'sub_domain' argument from conditionals,
+		# which doesn't work very well with Frame's setup, so we remove it.
+		if 'sub_domain' in match:
+			del(match['sub_domain'])
+
 		if match:
 			if not hasattr(match['action'], '__call__'):
 				controller = self.controllers[match['controller']]()
