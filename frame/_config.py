@@ -62,7 +62,7 @@ config = DotDict({
 	
 	'frame': {
 		'path': __frame_path,
-		'version': '0.1a',
+		'version': '0.2a',
 	},
 	
 	'http_server': {
@@ -72,7 +72,7 @@ config = DotDict({
 	'response': {
 		'default_headers': {
 			'Content-Type': 'text/html',
-			'Server': 'Frame/0.1a',
+			'Server': 'Frame/0.2a',
 		}
 	}
 })

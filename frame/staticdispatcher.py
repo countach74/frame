@@ -8,6 +8,7 @@ from util import format_date
 from dotdict import DotDict
 from _config import config
 from response import Response
+from random import getrandbits
 
 
 class StaticDispatcher(object):
@@ -73,9 +74,30 @@ class StaticDispatcher(object):
 	def _resolve_map(self):
 		for i in self.static_map:
 			self.static_map[i] = os.path.abspath(self.static_map[i])
+
+	def get_boundary_string(self):
+		return '%02x' % getrandbits(64)
+
+	def make_boundary(self, boundary_string, content_type, start, position, file_length):
+		return '\r\n'.join((
+			'',
+			'--%s' % boundary_string,
+			'Content-Range: bytes %s-%s/%s' % (start, position, file_length),
+			'Content-Type: %s' % content_type,
+			''
+		))
 			
-	def read_file(self, f, ranges=None):
+	def read_file(self, f, ranges=None, boundary_string=None):
 		if ranges:
+			f.seek(0, 2)
+			file_length = f.tell()
+
+			junk, extension = os.path.splitext(f.name)
+			try:
+				content_type = mimetypes.types_map[extension]
+			except KeyError:
+				content_type = 'application/octet-stream'
+
 			for r in ranges:
 				byte_range = self.range_pattern.match(r)
 				if byte_range:
@@ -89,13 +111,17 @@ class StaticDispatcher(object):
 						# Setup first chunk
 						data = f.read(chunk_size)
 
+						if len(ranges) > 1:
+							yield self.make_boundary(boundary_string, content_type, start, position, file_length)
+
 						while data and position < end if end is not None else True:
-							yield data
+							yield '%s\r\n' % data
 
 							data = f.read(chunk_size)
 
 							position = f.tell()
 							chunk_size = 4096 if end is None or end - position > 4096 else end - position
+
 
 				else:
 					negative_byte_range = self.negative_range_pattern.match(r)
@@ -108,6 +134,9 @@ class StaticDispatcher(object):
 						while data:
 							yield data
 							data = f.read(4096)
+
+			if len(ranges) > 1:
+				yield '--%s--\r\n' % boundary_string
 
 		else:
 			data = f.read(4096)
@@ -145,6 +174,7 @@ class StaticDispatcher(object):
 						headers['Content-Type'] = mimetypes.types_map[extension]
 					except KeyError:
 						headers['Content-Type'] = 'application/octet-stream'
+
 					try:
 						headers['Accept-Ranges'] = 'bytes'
 
@@ -156,11 +186,17 @@ class StaticDispatcher(object):
 									response_body = self.read_file(open(file_path, 'r'))
 								else:
 									status = '206 Partial Content'
-									f = open(file_path, 'r')
-									f.seek(0, 2)
-									headers['Content-Range'] = 'bytes %s/%s' % (ranges[0], f.tell())
-									f.seek(0)
-									response_body = self.read_file(f, ranges)
+									boundary_string = self.get_boundary_string()
+									file_obj = open(file_path, 'r')
+
+									file_obj.seek(0, 2)
+
+									if len(ranges) == 1:
+										headers['Content-Range'] = 'bytes %s/%s' % (ranges[0], file_obj.tell())
+									else:
+										headers['Content-Type'] = 'multipart/byteranges; boundary=%s' % boundary_string
+
+									response_body = self.read_file(file_obj, ranges, boundary_string)
 							else:
 								raise Error416
 						else:
