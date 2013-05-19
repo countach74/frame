@@ -156,7 +156,11 @@ class StaticDispatcher(object):
 									response_body = self.read_file(open(file_path, 'r'))
 								else:
 									status = '206 Partial Content'
-									response_body = self.read_file(open(file_path, 'r'), ranges)
+									f = open(file_path, 'r')
+									f.seek(0, 2)
+									headers['Content-Range'] = 'bytes %s/%s' % (ranges[0], f.tell())
+									f.seek(0)
+									response_body = self.read_file(f, ranges)
 							else:
 								raise Error416
 						else:
