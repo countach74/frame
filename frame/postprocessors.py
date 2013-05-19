@@ -46,6 +46,13 @@ def add_last_modified(request, response):
 	'''
 	if 'Last-Modified' not in response.headers:
 		response.headers['Last-Modified'] = format_date(get_gmt_now())
+
+
+def add_date(request, response):
+	'''
+	Adds the current timestamp to all requests.
+	'''
+	response.headers['Date'] = format_date(get_gmt_now())
 		
 		
 def jsonify(request, response):
@@ -54,7 +61,6 @@ def jsonify(request, response):
 	should be JSON encoded. This is for every request! If you only want to enable this sort
 	of behavior on specific controller actions, use :func:`frame.util.jsonify`.
 	'''
-	print 'ok'
 	params = dict(response.params.items() + response.additional_params.items())
 	if 'content_type' in params and params['content_type'] == 'json':
 		print 'JSON'

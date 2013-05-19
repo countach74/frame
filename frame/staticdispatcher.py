@@ -4,7 +4,7 @@ import os
 import mimetypes
 import datetime
 import time
-from util import format_date
+from util import format_date, get_gmt_now
 from dotdict import DotDict
 from _config import config
 from response import Response
@@ -114,14 +114,16 @@ class StaticDispatcher(object):
 						if len(ranges) > 1:
 							yield self.make_boundary(boundary_string, content_type, start, position, file_length)
 
-						while data and position < end if end is not None else True:
-							yield '%s\r\n' % data
+						while data and (position < end if end is not None else True):
+							if len(ranges) > 1:
+								yield '%s\r\n' % data
+							else:
+								yield data
 
 							data = f.read(chunk_size)
 
 							position = f.tell()
 							chunk_size = 4096 if end is None or end - position > 4096 else end - position
-
 
 				else:
 					negative_byte_range = self.negative_range_pattern.match(r)
@@ -143,6 +145,18 @@ class StaticDispatcher(object):
 			while data:
 				yield data
 				data = f.read(4096)
+
+	def get_range(self, f, r):
+		range_match = self.range_pattern.match(r)
+		if range_match:
+			f.seek(0, 2)
+			start = range_match.group(1)
+			file_length = f.tell()
+			if range_match.group(2) == '':
+				end = file_length - 1
+			else:
+				end = int(range_match.group(2))
+			return (start, end, file_length)
 
 	def match(self, environ):
 		'''
@@ -169,6 +183,7 @@ class StaticDispatcher(object):
 				headers = dict(config.response.default_headers)
 
 				if os.path.exists(file_path) and file_path.startswith(value):
+					headers['Date'] = format_date(get_gmt_now())
 
 					try:
 						headers['Content-Type'] = mimetypes.types_map[extension]
@@ -182,7 +197,7 @@ class StaticDispatcher(object):
 							range_match = self.ranges_pattern.match(self.app.request.headers.range)
 							if range_match:
 								ranges = range_match.group(1).split(',')
-								if ranges[0] == '0-':
+								if False: #ranges[0] == '0-':
 									response_body = self.read_file(open(file_path, 'r'))
 								else:
 									status = '206 Partial Content'
@@ -192,7 +207,8 @@ class StaticDispatcher(object):
 									file_obj.seek(0, 2)
 
 									if len(ranges) == 1:
-										headers['Content-Range'] = 'bytes %s/%s' % (ranges[0], file_obj.tell())
+										temp_range = self.get_range(file_obj, ranges[0])
+										headers['Content-Range'] = 'bytes %s-%s/%s' % temp_range
 									else:
 										headers['Content-Type'] = 'multipart/byteranges; boundary=%s' % boundary_string
 
@@ -204,8 +220,6 @@ class StaticDispatcher(object):
 
 					except EnvironmentError:
 						raise Error401
-
-							
 
 				else:
 					continue

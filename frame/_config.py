@@ -34,7 +34,8 @@ config = DotDict({
 	
 	'postprocessors': [
 		'handle_head_request',
-		'add_last_modified'
+		'add_last_modified',
+		'add_date'
 	],
 	
 	'hooks': [],

@@ -37,7 +37,8 @@ from errors import SessionLoadError
 from _config import config
 
 # Import base drivers
-from postprocessors import deflate, handle_head_request, add_last_modified, jsonify
+from postprocessors import (deflate, handle_head_request, add_last_modified, jsonify,
+	add_date)
 from preprocessors import (form_url_decoder, form_json_decoder, form_multipart_decoder,
 	handle_query_string)
 from dispatchers import RoutesDispatcher
@@ -109,6 +110,7 @@ class PostprocessorInterface(DriverInterface):
 			'deflate': deflate,
 			'handle_head_request': handle_head_request,
 			'add_last_modified': add_last_modified,
+			'add_date': add_date,
 			'jsonify': jsonify
 		})
 	
