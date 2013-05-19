@@ -129,6 +129,16 @@ class Error401(HTTPError):
 	'''
 	def __init__(self, status='401 Not Authorized', *args, **kwargs):
 		HTTPError.__init__(self, status, *args, **kwargs)
+
+
+class Error400(HTTPError):
+	def __init__(self, status='400 Bad Request', *args, **kwargs):
+		HTTPError.__init__(self, status, *args, **kwargs)
+
+
+class Error416(HTTPError):
+	def __init__(self, status='416 Requested Range Not Satisfiable', *args, **kwargs):
+		HTTPError.__init__(self, status, *args, **kwargs)
 		
 		
 class Error403(HTTPError):

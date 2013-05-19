@@ -1,4 +1,4 @@
-from errors import Error404, Error401
+from errors import Error404, Error401, Error400, Error416
 import re
 import os
 import mimetypes
@@ -24,6 +24,10 @@ class StaticDispatcher(object):
 			'/styles': '/path/to/styles'
 		})
 	'''
+
+	ranges_pattern = re.compile('^bytes=([0-9\-,]+)$', re.I)
+	range_pattern = re.compile('^([0-9]+)-([0-9]*)$')
+	negative_range_pattern = re.compile('^(-[0-9]+)$')
 	
 	def __init__(self, app, static_map=None):
 		'''
@@ -70,11 +74,46 @@ class StaticDispatcher(object):
 		for i in self.static_map:
 			self.static_map[i] = os.path.abspath(self.static_map[i])
 			
-	def read_file(self, f):
-		data = f.read(4096)
-		while data:
-			yield data
+	def read_file(self, f, ranges=None):
+		if ranges:
+			for r in ranges:
+				byte_range = self.range_pattern.match(r)
+				if byte_range:
+						start = int(byte_range.group(1))
+						end = None if byte_range.group(2) == '' else int(byte_range.group(2)) + 1
+
+						f.seek(start)
+						position = f.tell()
+						chunk_size = 4096 if end is None or end - position > 4096 else end - position
+
+						# Setup first chunk
+						data = f.read(chunk_size)
+
+						while data and position < end if end is not None else True:
+							yield data
+
+							data = f.read(chunk_size)
+
+							position = f.tell()
+							chunk_size = 4096 if end is None or end - position > 4096 else end - position
+
+				else:
+					negative_byte_range = self.negative_range_pattern.match(r)
+					if negative_byte_range:
+						start = int(negative_byte_range.group(1))
+
+						f.seek(start, 2)
+
+						data = f.read(4096)
+						while data:
+							yield data
+							data = f.read(4096)
+
+		else:
 			data = f.read(4096)
+			while data:
+				yield data
+				data = f.read(4096)
 
 	def match(self, environ):
 		'''
@@ -93,6 +132,7 @@ class StaticDispatcher(object):
 			if uri.startswith(key):
 				uri = uri[len(key):]
 				uri = uri.lstrip('/')
+				status = '200 OK'
 
 				file_path = os.path.join(value, uri).rstrip('/')
 				trash, extension = os.path.splitext(file_path)
@@ -100,14 +140,32 @@ class StaticDispatcher(object):
 				headers = dict(config.response.default_headers)
 
 				if os.path.exists(file_path) and file_path.startswith(value):
+
 					try:
 						headers['Content-Type'] = mimetypes.types_map[extension]
 					except KeyError:
 						headers['Content-Type'] = 'application/octet-stream'
 					try:
-						response_body = self.read_file(open(file_path, 'r'))
+						headers['Accept-Ranges'] = 'bytes'
+
+						if 'range' in self.app.request.headers:
+							range_match = self.ranges_pattern.match(self.app.request.headers.range)
+							if range_match:
+								ranges = range_match.group(1).split(',')
+								if ranges[0] == '0-':
+									response_body = self.read_file(open(file_path, 'r'))
+								else:
+									status = '206 Partial Content'
+									response_body = self.read_file(open(file_path, 'r'), ranges)
+							else:
+								raise Error416
+						else:
+							response_body = self.read_file(open(file_path, 'r'))
+
 					except EnvironmentError:
 						raise Error401
+
+							
 
 				else:
 					continue
@@ -121,7 +179,7 @@ class StaticDispatcher(object):
 						time.mktime(time.gmtime(st.st_mtime)))
 					headers['Last-Modified'] = format_date(last_modified)
 
-				response = Response.from_data('200 OK', headers, response_body)
+				response = Response.from_data(status, headers, response_body)
 				return response
 
 		raise Error404
