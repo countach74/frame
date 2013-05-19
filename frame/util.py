@@ -252,3 +252,9 @@ class Pagination(object):
 		pages = {}
 		for i in xrange(1, self.num_pages + 1):
 			yield {'num': i, 'selected': i == self.page}
+
+
+class Hook(object):
+  def __init__(self, app, controller):
+    self.app = app
+    self.controller = controller
