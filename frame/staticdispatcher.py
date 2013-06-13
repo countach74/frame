@@ -142,12 +142,12 @@ class StaticDispatcher(object):
 
 		else:
 			data = f.read(4096)
-      first_run = True
+			first_run = True
 
 			while first_run or data:
 				yield data
 				data = f.read(4096)
-        first_run = False
+				first_run = False
 
 	def get_range(self, f, r):
 		range_match = self.range_pattern.match(r)
