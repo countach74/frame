@@ -258,3 +258,28 @@ class Hook(object):
   def __init__(self, app, controller):
     self.app = app
     self.controller = controller
+
+
+def import_all_from_folder(path):
+	import os
+	import sys
+	from importlib import import_module
+	from glob import glob
+
+	modules = {}
+	abs_path = os.path.abspath(path)
+
+	if not os.path.exists(abs_path):
+		raise ImportError("Cannot import modules from %s. Path does not exist." % abs_path)
+
+	add_path = abs_path not in sys.path
+		
+	if add_path:
+		sys.path.append(abs_path)
+
+	for file_path in glob('%s/*.py' % abs_path):
+		dir_name, file_name = os.path.split(file_path)
+		module_name = file_name[:-3]
+		modules[module_name] = import_module(module_name)
+
+	return modules
