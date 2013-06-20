@@ -53,8 +53,8 @@ class ModuleMonitor(threading.Thread):
 		Returns true if the two stat dictionaries don't differ, false
 		if they do.
 		'''
-		for key, value in old.items():
-			if key in new and new[key] != value:
+		for key, value in old.iteritems():
+			if key in new and new[key].st_mtime != value.st_mtime:
 				return False
 		return True
 		
