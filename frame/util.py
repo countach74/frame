@@ -10,6 +10,7 @@ from threading import RLock
 import time
 import datetime
 import json
+from _config import config
 
 
 class Decorator(object):
@@ -205,7 +206,7 @@ def jsonify(require_content_type=False):
 					and kwargs['content_type'] == 'json'):
 			
 				app.response.headers['Content-Type'] = 'application/json'
-				return json.dumps(f(*args, **kwargs))
+				return json.dumps(f(*args, **kwargs), cls=config.jsonify.encoder)
 				
 			else:
 				return f(*args, **kwargs)

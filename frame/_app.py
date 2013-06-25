@@ -279,7 +279,8 @@ class App(Singleton):
 		# Setup Jinja2 Environment
 		loaders = list(config.templates.loaders)
 		loaders.insert(0, FileSystemLoader(config.templates.directory))
-		self.environment = Environment(loader=ChoiceLoader(loaders))
+		self.environment = Environment(loader=ChoiceLoader(loaders), extensions=[
+      'jinja2.ext.do'])
 		self.environment.globals.update(config.templates.globals)
 		self.environment.filters.update(config.templates.filters)
 		

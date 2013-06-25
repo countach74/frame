@@ -3,6 +3,7 @@ from jinja2 import PackageLoader
 import sys
 import os
 from pkg_resources import iter_entry_points
+import json
 
 
 # Frame's library path
@@ -75,7 +76,11 @@ config = DotDict({
 			'Content-Type': 'text/html',
 			'Server': 'Frame/0.2a',
 		}
-	}
+	},
+
+  'jsonify': {
+    'enocder': json.JSONEncoder
+  }
 })
 
 
