@@ -79,7 +79,7 @@ config = DotDict({
 	},
 
   'jsonify': {
-    'enocder': json.JSONEncoder
+    'encoder': json.JSONEncoder
   }
 })
 
