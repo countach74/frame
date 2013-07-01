@@ -117,6 +117,9 @@ class Session(object):
     self.save(key, data)
     self.cleanup_sessions()
 
+  def update(self, data):
+    self._data.update(data)
+
   def init(self):
     '''
     A hook that is called at session initialization. Use this if you need to perform any
