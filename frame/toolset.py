@@ -94,8 +94,17 @@ class CurrentUri(Tool):
 		key, value = map(str, item)
 		return '%s=%s' % (key, quote_plus(value))
 
+
 class GetPartialView(Tool):
 	name = 'get_partial_view'
 
 	def __call__(self, partial_view):
 		return self.app.partial_views[partial_view]
+
+
+class Uri(Tool):
+  name = 'uri'
+
+  def __getitem__(self, key):
+    controller = self.app.controller
+    return controller.uri[key]
