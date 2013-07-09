@@ -100,11 +100,3 @@ class GetPartialView(Tool):
 
 	def __call__(self, partial_view):
 		return self.app.partial_views[partial_view]
-
-
-class Uri(Tool):
-  name = 'uri'
-
-  def __getitem__(self, key):
-    controller = self.app.current_controller
-    return controller.uri[key]
