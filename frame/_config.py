@@ -23,7 +23,8 @@ config = DotDict({
 		'directory': 'templates',
 		'loaders': [PackageLoader('frame', 'templates')],
 		'globals': {},
-		'filters': {}
+		'filters': {},
+    'environment': {}
 	},
 	
 	'preprocessors': [
