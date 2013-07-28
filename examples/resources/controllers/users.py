@@ -13,8 +13,7 @@ class Users(Controller):
 
 	def index(self):
 		users = self.users.values()
-
-		return self.get_template('users/index.html').render(users=users)
+    return {'users': users}
 
 	def show(self, slug):
 		try:
@@ -22,7 +21,7 @@ class Users(Controller):
 		except KeyError:
 			raise frame.Error404("Cannot find that user")
 		else:
-			return self.get_template('users/show.html').render(user=user)
+      return {'user': user}
 
 	def new(self):
 		return self.get_template('users/new.html').render()
@@ -38,3 +37,4 @@ class Users(Controller):
 	def delete(self, slug):
 		if slug in self.users:
 			del(self.users[slug])
+    return 'User deleted'
