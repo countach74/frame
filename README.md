@@ -1,18 +1,18 @@
-Frame - An MVC-Targeted Python Web Framework
-============================================
+Frame - A Python Web Framework
+==============================
 
 Frame is a simple, flexible web framework. It is designed to be both fast to get started with, yet capable of scaling
 up to a large application.
 
-Getting started is as simple as::
+Getting started is as simple as:
 
-  import frame
-  
-  class Root(frame.Controller):
-    def index(self):
-      return 'Hello, World!'
+    import frame
     
-  frame.routes.connect('/', 'root#index')
-    
-  if __name__ == '__main__':
-    frame.start_http()
+    class Root(frame.Controller):
+      def index(self):
+        return 'Hello, World!'
+      
+    frame.routes.connect('/', 'root#index')
+      
+    if __name__ == '__main__':
+      frame.start_http()
