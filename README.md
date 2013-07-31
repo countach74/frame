@@ -16,3 +16,5 @@ Getting started is as simple as:
       
     if __name__ == '__main__':
       frame.start_http()
+
+For more information, [read the docs](http://python.thirteen8.com/frame).
