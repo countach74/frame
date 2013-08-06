@@ -131,7 +131,7 @@ class Response(object):
 			else:
 			'''
 			template_dir = self.action.im_self.__class__.__name__.lower()
-			template_path = os.path.join(template_dir, method_name + '.html')
+			template_path = os.path.join(template_dir, method_name + config.templates.extension)
 			
 			result = self.action.im_self.get_template(template_path).render(
 				result or {})

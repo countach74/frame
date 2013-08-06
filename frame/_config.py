@@ -24,7 +24,8 @@ config = DotDict({
 		'loaders': [PackageLoader('frame', 'templates')],
 		'globals': {},
 		'filters': {},
-    'environment': {}
+    'environment': {},
+    'extension': '.html'
 	},
 	
 	'preprocessors': [
