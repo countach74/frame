@@ -1,5 +1,5 @@
 from _routes import routes
-from _app import app
+import _app
 from errors import Error301, Error302, Error303
 
 
@@ -50,7 +50,7 @@ class Controller(object):
 	
 	__metaclass__ = _ControllerMeta
 	
-	app = app
+	app = _app.app
 	'''The current Frame application'''
 
 	def redirect(self, url, add_script_name=True, status='302 Found'):
@@ -73,13 +73,6 @@ class Controller(object):
 		error = globals()['Error%s' % code](url, message=message)
 		
 		raise error
-
-	@property
-	def get_template(self):
-		'''
-		Alias of Jinja2 environment's get_template method (fetch a Jinja2 template).
-		'''
-		return self.app.environment.get_template
 
 	"""
 	@property

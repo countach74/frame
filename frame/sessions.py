@@ -485,7 +485,8 @@ class SessionHook(object):
     except Exception, e:
       raise Error500
     
-    self.app.environment.globals['session'] = self.app.session
+    if self.app.drivers.template:
+      self.app.drivers.template.globals['session'] = self.app.session
     
   def __exit__(self, e_type, e_value, e_tb):
     self.app.drivers.session.save_session(self.app.session)

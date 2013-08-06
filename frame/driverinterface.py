@@ -25,14 +25,14 @@ class DriverInterface(dict):
 	def __repr__(self):
 		return "<DriverInterface(%s)>" % ', '.join(self.keys())
 		
-	def load_driver(self, name, *args):
+	def load_driver(self, name, *args, **kwargs):
 		'''
 		Loads the specified driver (calls :meth:`init`).
 		
 		:param name: The name of the driver to load
 		:return: An instantiated driver
 		'''
-		return self.init(self[name], *args)
+		return self.init(self[name], *args, **kwargs)
 		
 	def add_driver(self, name, driver):
 		'''
@@ -45,7 +45,7 @@ class DriverInterface(dict):
 		'''
 		self[name] = driver
 		
-	def init(self, driver, *args):
+	def init(self, driver, *args, **kwargs):
 		'''
 		A hook to instruct the interface how to instantiate the driver.
 		
@@ -63,13 +63,13 @@ class DriverInterface(dict):
 		'''
 		return driver(*args)
 		
-	def load_current(self):
+	def load_current(self, *args, **kwargs):
 		'''
 		Attempts to guess the currently loaded driver, if a config directive was given and
 		has a 'driver' key.
 		'''
 		if self.config and 'driver' in self.config:
-			return self.load_driver(self.config.driver)
+			return self.load_driver(self.config.driver, *args, **kwargs)
 		else:
 			raise AttributeError("No driver config specified or config lacks 'driver' item")
 		

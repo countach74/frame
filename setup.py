@@ -17,10 +17,12 @@ setup(
 	],
 	entry_points={
 		'frame.drivers': [
-			'session = frame.sessions:register_driver'
+			'session = frame.sessions:register_driver',
+      'templates = frame.templates:register_driver'
 		],
 		'frame.config': [
-			'session = frame.sessions:register_config'
+			'session = frame.sessions:register_config',
+      'templates = frame.templates:register_config'
 		]
 	},
 	package_data={

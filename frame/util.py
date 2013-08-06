@@ -287,3 +287,17 @@ def import_all_from_folder(path, excludes=[]):
     sys.path.remove(base_path)
 
   return modules
+
+
+class MethodException(Exception):
+  def __init__(self, action, params={}, *args, **kwargs):
+    import _app
+    import response
+
+    if not action.im_self:
+      obj = action.im_class
+      action = getattr(obj, action.__name__)
+
+    self.response = response.Response(_app.app, action, params)
+
+    Exception.__init__(self, *args, **kwargs)
