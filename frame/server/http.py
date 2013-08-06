@@ -94,8 +94,8 @@ class Connection(object):
             self.server.r_list.remove(self)
           request = ''.join(self.read_buffer)
           
-          #self.handle_request(request)
-          self.server.worker_queue.put(self, request)
+          self.handle_request(request)
+          #self.server.worker_queue.put(self, request)
           
     elif self.request_headers:
       self.request_body_received += len(data)
@@ -104,8 +104,8 @@ class Connection(object):
           self.server.r_list.remove(self)
         request = ''.join(self.read_buffer)
         
-        #self.handle_request(request)
-        self.server.worker_queue.put(self, request)
+        self.handle_request(request)
+        #self.server.worker_queue.put(self, request)
 
   def handle_write(self):
     data = self.write_buffer.pop(0)
@@ -244,7 +244,7 @@ class HTTPServer(object):
     self.connections = []
     
     # Setup worker queue
-    self.worker_queue = HTTPQueue(self, config.http_server.num_workers)
+    #self.worker_queue = HTTPQueue(self, config.http_server.num_workers)
 
     # Setup socket
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -281,7 +281,7 @@ class HTTPServer(object):
       self.bind_socket()
     except socket.error, e:
       logger.log_error("Could not start HTTP Server: %s" % e.args[1])
-      self.worker_queue.stop()
+      #self.worker_queue.stop()
       sys.exit(1)
       
     self.setup_signal_handlers()
@@ -333,4 +333,4 @@ class HTTPServer(object):
       self.module_monitor.stop()
       self.module_monitor.join()
       
-    self.worker_queue.stop()
+    #self.worker_queue.stop()
