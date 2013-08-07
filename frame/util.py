@@ -295,7 +295,7 @@ class MethodException(Exception):
     import response
 
     if not action.im_self:
-      obj = action.im_class
+      obj = action.im_class()
       action = getattr(obj, action.__name__)
 
     self.response = response.Response(_app.app, action, params)

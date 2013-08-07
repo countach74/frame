@@ -29,7 +29,8 @@ setup(
 		'frame': [
 			'templates/*.html',
 			'templates/includes/*.html',
-			'templates/errors/*.html',
+      'templates/__errors/*.html',
+			'templates/__errors/jinja2/*.html',
 			'templates/forms/*.html',
 			'templates/forms/elements/*.html',
 			'templates/forms/includes/*.html',

@@ -3,6 +3,7 @@ from dotdict import DotDict
 from jinja2 import Environment, ChoiceLoader, PackageLoader, FileSystemLoader
 from abc import ABCMeta, abstractmethod, abstractproperty
 import os
+import errors
 
 
 templates_config = DotDict({
@@ -34,48 +35,6 @@ class TemplateDriver(object):
     '''
     pass
 
-  @abstractmethod
-  def get_global(self, key):
-    '''
-    Should return global with the given key or return None.
-    '''
-    pass
-
-  @abstractmethod
-  def set_global(self, key, value):
-    '''
-    Set the global key with value.
-    '''
-    pass
-
-  @abstractmethod
-  def del_global(self, key):
-    '''
-    Delete a global by key.
-    '''
-    pass
-
-  @abstractmethod
-  def get_filter(self, key):
-    '''
-    Return filter with given key or return None
-    '''
-    pass
-
-  @abstractmethod
-  def set_filter(self, key, value):
-    '''
-    Set the filter key with value.
-    '''
-    pass
-
-  @abstractmethod
-  def del_filter(self, key):
-    '''
-    Delete a filter by key.
-    '''
-    pass
-
   @abstractproperty
   def globals(self):
     pass
@@ -93,7 +52,7 @@ class Jinja2Driver(TemplateDriver):
   def __init__(self, **options):
     TemplateDriver.__init__(self, **options)
 
-    loaders = list(options['loaders'])
+    loaders = list(templates_config.jinja2.loaders + options['loaders'])
     loaders.insert(0, FileSystemLoader(templates_config.directory))
 
     self.environment = Environment(
@@ -104,24 +63,6 @@ class Jinja2Driver(TemplateDriver):
 
   def get_template(self, *args, **kwargs):
     return self.environment.get_template(*args, **kwargs)
-
-  def get_global(self, key):
-    return self.environment.globals[key]
-
-  def set_global(self, key, value):
-    self.environment.globals[key] = value
-
-  def del_global(self, key):
-    del(self.environment.globals[key])
-
-  def get_filter(self, key):
-    return self.environment.filters[key]
-
-  def set_filter(self, key, value):
-    self.environment.filters[key] = value
-
-  def del_filter(self, key):
-    del(self.environment.filters[key])
 
   @property
   def globals(self):
@@ -151,24 +92,6 @@ class TemplateInterface(DriverInterface):
 
   def get_template(self, *args, **kwargs):
     return self.app.template_engine.get_template(*args, **kwargs)
-
-  def get_global(self):
-    return self.app.template_engine.get_global(key)
-
-  def set_global(self, key, value):
-    self.app.template_engine.set_global(key, value)
-
-  def del_global(self, key):
-    self.app.template_engine.del_global(key)
-
-  def get_filter(self, key):
-    return self.app.template_engine.get_filter(key)
-
-  def set_filter(self, key, value):
-    self.app.template_engine.set_filter(key, value)
-
-  def del_filter(self, key):
-    self.app.template_engine.del_filter(key)
 
   @property
   def globals(self):
@@ -206,8 +129,33 @@ def templatize(request, response):
       response.body = response.app.template_engine.render(
         template_path, response.body)
     except Exception, e:
-      import errors
-      raise errors.Error500
+      return errors.Error500().response
+
+
+original_HTTPError_setup_response = errors.Error500.setup_response
+
+
+def HTTPError_setup_response(self, status, headers, body):
+  import response
+  import jinja2
+  from _app import app
+
+  split = status.split(None, 1)
+  self.kwargs['app'] = app
+  self.kwargs['status'] = status
+
+  if not body:
+    try:
+      body = app.template_engine.render('__errors/jinja2/%s.html' % split[0],
+        self.kwargs)
+    except jinja2.exceptions.TemplateNotFound:
+      body = app.template_engine.render('__errors/jinja2/generic.html',
+        self.kwargs)
+    except Exception, e:
+      app.logger.log_warning('Reverting to default error template.')
+      original_HTTPError_setup_response(self, status, headers, body)
+      return
+  self.response = response.Response.from_data(status, headers, body)
 
 
 def register_config(config):
@@ -227,6 +175,8 @@ def register_driver(drivers):
       'jinja2': Jinja2Driver
     }
   )
+
+  errors.HTTPError.setup_response = HTTPError_setup_response
 
   drivers.register('postprocessor', 'template', templatize)
 

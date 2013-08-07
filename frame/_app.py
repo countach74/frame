@@ -224,14 +224,7 @@ class App(Singleton):
       if hasattr(e, 'response'):
         response = e.response
       else:
-        import traceback
-        traceback.print_exc()
-        tb = traceback.format_exc()
-        response = Response.from_data(
-          '500 Internal Server Error',
-          {},
-          '<h1>500 Internal Server Error</h1><pre>{tb}</pre>'.format(tb=tb)
-        )
+        response = Error500().response
 
     # Need to do something more elegant to handle generators/chunked encoding...
     # Also need to come up with a better way to log chunked encodings
@@ -245,9 +238,19 @@ class App(Singleton):
 
     else:
       # Apply post processors
-      for i in self.postprocessors:
-        i(self.request, response)
+      temp_data = {'response': response}
 
+      def apply_postprocessors():
+        for i in self.postprocessors:
+          new_response = i(self.request, temp_data['response'])
+          if new_response and isinstance(new_response, Response):
+            temp_data['response'] = new_response
+            apply_postprocessors()
+
+      apply_postprocessors()
+
+      response = temp_data['response']
+              
       # Deliver the goods
       start_response(response.status, response.headers.items())
       yield str(response.body)

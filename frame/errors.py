@@ -48,7 +48,6 @@ class HTTPError(Exception):
     :param status: The status line to send the WSGI server
     :param headers: Headers to apply to the error
     '''
-    import response
     
     base_headers = DotDict(_default_error_headers)
     base_headers.update(headers)
@@ -59,6 +58,14 @@ class HTTPError(Exception):
     #: Stores any keyword arguments; these are passed to the template when rendered
     self.kwargs = kwargs
 
+    self.setup_response(status, base_headers, body)
+
+  def setup_response(self, status, headers, body):
+    import response
+    data = dict(self.kwargs)
+    if 'message' not in data:
+      data['message'] = ''
+
     if not body:
       body = '''\
 <!DOCTYPE html>
@@ -68,10 +75,11 @@ class HTTPError(Exception):
   </head>
   <body>
     <h1>{status}</h1>
+    {message}
   </body>
-</html>'''.format(status=status)
+</html>'''.format(status=status, **data)
     
-    self.response = response.Response.from_data(status, base_headers, body)
+    self.response = response.Response.from_data(status, headers, body)
         
   
 class Error301(HTTPError):
@@ -154,11 +162,9 @@ class Error500(HTTPError):
     e_type, e_value, e_tb = sys.exc_info()
     if e_tb:
       tb = traceback.format_exception(e_type, e_value, e_tb)
-      new_kwargs['traceback'] = map(escape, tb)
+      new_kwargs['message'] = '<pre>%s</pre>' % traceback.format_exc()
       for line in tb:
         logger.log_exception(line, True)
-    else:
-      new_kwargs['traceback'] = None
       
     HTTPError.__init__(self, status, *args, **new_kwargs)
 
