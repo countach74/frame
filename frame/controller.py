@@ -89,13 +89,6 @@ class Controller(object):
 		Retrieve the current :mod:`frame.request.Request` object.
 		'''
 		return app.request
-
-	@property
-	def session(self):
-		'''
-		Retrieve the current :mod:`frame.session.Session` object.
-		'''
-		return app.session
 		
 	@property
 	def uri(self):

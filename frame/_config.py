@@ -42,6 +42,8 @@ config = DotDict({
 	],
 	
 	'hooks': [],
+
+  'init_hooks': [],
 	
 	'timezone': 'America/Los_Angeles',
 	

@@ -7,7 +7,6 @@ import traceback
 from jinja2 import Environment, ChoiceLoader, PackageLoader, FileSystemLoader
 import os
 import sys
-import sessions
 import types
 from threading import current_thread, RLock
 from pkg_resources import iter_entry_points
@@ -64,9 +63,6 @@ class App(Singleton):
     
     self.drivers = self._setup_driver_database()
       
-    # Setup session interface
-    #self.session_interface = sessions.SessionInterface(self)
-    
     # Setup pre and post processor lists
     self.preprocessors = []
     self.postprocessors = []
@@ -117,6 +113,12 @@ class App(Singleton):
       'hook',
       driverdatabase.DriverInterface,
       config=config.hooks)
+
+    # Add init_hooks interface
+    drivers.add_interface(
+      'init_hook',
+      driverdatabase.DriverInterface,
+      config=config.init_hooks)
     
     return drivers
     
@@ -289,25 +291,11 @@ class App(Singleton):
         mapping, truncate(path, 40)))
       self.static_map[mapping] = path
       
-    # Setup Jinja2 Environment
-    '''
-    loaders = list(config.templates.loaders)
-    loaders.insert(0, FileSystemLoader(config.templates.directory))
-    environ_options = {
-      'loader': ChoiceLoader(loaders),
-      'extensions': ['jinja2.ext.do']
-    }
-    environ_options.update(config.templates.environment)
-    self.environment = Environment(**environ_options)
-    self.environment.globals.update(config.templates.globals)
-    self.environment.filters.update(config.templates.filters)
-    
-    # Add toolset to Jinja2 environment
-    self.environment.globals['tools'] = toolset
-    '''
-    
     # Initialize dispatcher
     self.dispatcher = self.drivers.dispatcher.current(self)
+
+    for i, init_hook in self.drivers.init_hook.iteritems():
+      init_hook(self)
     
     # Signal that the application has been prepped
     self._prepped = True

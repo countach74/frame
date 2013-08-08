@@ -7,16 +7,15 @@ please see :ref:`create_session_driver`.
 
 
 import pickle
-from dotdict import DotDict
-from errors import SessionLoadError, SessionSaveError, Error500
+from ..dotdict import DotDict
+from ..errors import SessionLoadError, SessionSaveError, Error500
 import datetime
 from uuid import uuid4
-from _config import config
+from .._config import config
 import os
-from threading import RLock
-from _logger import logger
-from driverinterface import DriverInterface
-from threading import current_thread
+from threading import RLock, current_thread
+from .._logger import logger
+from ..driverinterface import DriverInterface
 
 
 sessions_config = DotDict({
@@ -482,6 +481,7 @@ class SessionHook(object):
   def __enter__(self):
     try:
       self.app.session = self.app.drivers.session.get_session()
+      self.controller.session = self.app.session
     except Exception, e:
       raise Error500
     
