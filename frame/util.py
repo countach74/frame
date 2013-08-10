@@ -96,8 +96,6 @@ def import_all_modules(origin_file):
   module_paths = glob.glob("%s/*.py" % path)
   module_files = map(os.path.basename, module_paths)
 
-  modules = []
-
   for module, extension in map(os.path.splitext, module_files):
     if not module.startswith('__'):
       __import__(module)
@@ -250,7 +248,6 @@ class Pagination(object):
       
   @property
   def pages(self):
-    pages = {}
     for i in xrange(1, self.num_pages + 1):
       yield {'num': i, 'selected': i == self.page}
 
@@ -273,7 +270,7 @@ def import_all_from_folder(path, excludes=[]):
   base_path = os.path.dirname(path)
 
   if not os.path.exists(base_path):
-    raise ImportError("Cannot import modules from %s. Path does not exist." % abs_path)
+    raise ImportError("Cannot import modules from %s. Path does not exist." % base_path)
 
   add_path = base_path not in sys.path
     

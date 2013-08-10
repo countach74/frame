@@ -49,7 +49,6 @@ from _config import config
 from _logger import logger
 from controller import Controller
 from errors import *
-from dotdict import DotDict
 from pkg_resources import iter_entry_points
 
 

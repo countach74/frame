@@ -1,8 +1,6 @@
-from dotdict import DotDict
-from errors import HTTPError, Error404
+from errors import Error404
 import datetime
 from _config import config
-import os
 from util import format_date, get_gmt_now
 from headersdict import HeadersDict
 

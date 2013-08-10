@@ -1,14 +1,11 @@
 from request import Request
 from response import Response
 from _routes import routes
-from dotdict import DotDict
-from errors import HTTPError, Error404, Error500
-import traceback
-from jinja2 import Environment, ChoiceLoader, PackageLoader, FileSystemLoader
+from errors import Error500
 import os
 import sys
 import types
-from threading import current_thread, RLock
+from threading import RLock
 from pkg_resources import iter_entry_points
 from threaddata import ThreadData
 
@@ -183,7 +180,7 @@ class App(Singleton):
       
     # Otherwise, we should be good to handle the request
     else:
-      for key, value in params.items():
+      for key in params.keys():
         if key in ('controller', 'action', 'method'):
           del(params[key])
           
