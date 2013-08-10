@@ -134,6 +134,8 @@ def templatize(request, response):
     except Exception, e:
       return errors.Error500().response
 
+templatize.priority = 50
+
 
 original_HTTPError_setup_response = errors.Error500.setup_response
 

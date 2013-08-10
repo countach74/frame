@@ -192,12 +192,11 @@ class App(Singleton):
         config.hooks)
       
       hooks = sorted(hooks, key=lambda x: x.priority)
-      print hooks
 
       response = Response(self, match, params)
       
       with contextlib.nested(*hooks):
-        for i in self.preprocessors:
+        for i in sorted(self.preprocessors, key=lambda x: x.priority):
           i(self.request, response)
         response.render()
       
@@ -240,7 +239,7 @@ class App(Singleton):
       temp_data = {'response': response}
 
       def apply_postprocessors():
-        for i in self.postprocessors:
+        for i in sorted(self.postprocessors, key=lambda x: x.priority):
           new_response = i(self.request, temp_data['response'])
           if new_response and isinstance(new_response, Response):
             temp_data['response'] = new_response
@@ -275,9 +274,13 @@ class App(Singleton):
     
     for i in config.preprocessors:
       self.preprocessors.append(self.drivers.preprocessor[i])
+      if not hasattr(self.drivers.preprocessor[i], 'priority'):
+        self.drivers.preprocessor[i].priority = 10
     
     for i in config.postprocessors:
       self.postprocessors.append(self.drivers.postprocessor[i])
+      if not hasattr(self.drivers.postprocessor[i], 'priority'):
+        self.drivers.postprocessor[i].priority = 10
 
     for mapping, path in config.static_map.items():
       logger.log_info("Mapping static directory: '%s' => '%s'" % (

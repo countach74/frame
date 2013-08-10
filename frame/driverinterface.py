@@ -61,7 +61,7 @@ class DriverInterface(dict):
 		:param driver: The driver to instantiate
 		:return: An instantiated driver
 		'''
-		return driver(*args)
+		return driver(*args, **kwargs)
 		
 	def load_current(self, *args, **kwargs):
 		'''
