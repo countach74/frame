@@ -85,10 +85,10 @@ class TemplateInterface(DriverInterface):
     driver_object = driver(*args, **kwargs)
 
     for k, v in templates_config.globals.iteritems():
-      driver_object.set_global(k, v)
+      driver_object.globals[k] = v
 
     for k, v in templates_config.filters.iteritems():
-      driver_object.set_filter(k, v)
+      driver_object.filters[k] = v
 
     return driver_object
 

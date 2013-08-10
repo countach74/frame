@@ -88,7 +88,7 @@ class Controller(object):
 		'''
 		Retrieve the current :mod:`frame.request.Request` object.
 		'''
-		return app.request
+		return self.app.request
 		
 	@property
 	def uri(self):
