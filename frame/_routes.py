@@ -5,6 +5,7 @@ from uuid import uuid4
 from util import make_resource, Singleton
 from _logger import logger
 import threading
+import _app
 
 
 class Routes(Singleton):
@@ -109,10 +110,13 @@ class Routes(Singleton):
 		self.mapper = Mapper()
 		self.controllers = {}
 		self.resources = {}
-		self.thread_data = {}
 
 		# Setup to use sub domains by default
 		self.mapper.sub_domains = True
+		
+	@property
+	def thread_data(self):
+		return _app.app.thread_data
 		
 	def register_controller(self, controller):
 		'''
@@ -144,7 +148,7 @@ class Routes(Singleton):
 				action = match['action']
 				controller = None
 				
-			self.thread_data[threading.current_thread()] = {
+			self.thread_data['current_route'] = {
 				'controller': controller,
 				'action': action
 			}
@@ -156,11 +160,11 @@ class Routes(Singleton):
 			
 	@property
 	def current_controller(self):
-		return self.thread_data[threading.current_thread()]['controller']
+		return self.thread_data['current_route']['controller']
 
 	@property
 	def current_action(self):
-		return self.thread_data[threading.current_thread()]['action']
+		return self.thread_data['current_route']['action']
 		
 	def connect(self, path, controller=None, *args, **kwargs):
 		'''

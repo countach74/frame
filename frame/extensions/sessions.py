@@ -13,9 +13,9 @@ import datetime
 from uuid import uuid4
 from .._config import config
 import os
-from threading import RLock, current_thread
 from .._logger import logger
 from ..driverinterface import DriverInterface
+from threading import RLock
 
 
 sessions_config = DotDict({
@@ -533,13 +533,12 @@ def register_driver(drivers):
   App = app.__class__
 
   def get_session(self):
-    return app.thread_data[current_thread()]['session']
+    return app.thread_data['session']
 
   def set_session(self, value):
-    app._setup_thread()
-    app.thread_data[current_thread()]['session'] = value
+    app.thread_data['session'] = value
 
   def del_session(self):
-    del(self.thread_data[current_thread()]['session'])
+    del(self.thread_data['session'])
 
   App.session = property(get_session, set_session, del_session)

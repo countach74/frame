@@ -10,6 +10,7 @@ import sys
 import types
 from threading import current_thread, RLock
 from pkg_resources import iter_entry_points
+from threaddata import ThreadData
 
 # For jinja2 toolset
 from toolset import toolset
@@ -56,7 +57,7 @@ class App(Singleton):
     self.environment = None
     
     # Store data for each thread indiviually
-    self.thread_data = {}
+    self.thread_data = ThreadData()
 
     self.toolset = toolset
     self.toolset.app = self
@@ -122,36 +123,29 @@ class App(Singleton):
     
     return drivers
     
-  def _setup_thread(self):
-    thread = current_thread()
-    if thread not in self.thread_data:
-      self.thread_data[thread] = {}
-    
   @property
   def request(self):
-    return self.thread_data[current_thread()]['request']
+    return self.thread_data['request']
     
   @request.setter
   def request(self, value):
-    self._setup_thread()
-    self.thread_data[current_thread()]['request'] = value
+    self.thread_data['request'] = value
     
   @request.deleter
   def request(self):
-    del(self.thread_data[current_thread()]['request'])
+    del(self.thread_data['request'])
     
   @property
   def response(self):
-    return self.thread_data[current_thread()]['response']
+    return self.thread_data['response']
     
   @response.setter
   def response(self, value):
-    self._setup_thread()
-    self.thread_data[current_thread()]['response'] = value
+    self.thread_data['response'] = value
     
   @response.deleter
   def response(self):
-    del(self.thread_data[current_thread()]['response'])
+    del(self.thread_data['response'])
     
   @property
   def current_controller(self):
@@ -264,11 +258,7 @@ class App(Singleton):
     self._remove_thread_data()
     
   def _remove_thread_data(self):
-    thread = current_thread()
-    if thread in self.thread_data:
-      del(self.thread_data[thread])
-    if thread in self.routes.thread_data:
-      del(self.routes.thread_data[thread])
+    self.thread_data.clean()
       
   def _prep_start(self):
     '''

@@ -7,7 +7,7 @@ import sys
 
 class HelloWorld(frame.Controller):
   def index(self):
-    print self.session
+    self.response.headers['Content-Type'] = 'text/plain'
     return 'hello, world'
 
   def other(self):

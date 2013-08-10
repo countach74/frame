@@ -4,6 +4,7 @@ import datetime
 from _config import config
 import os
 from util import format_date, get_gmt_now
+from headersdict import HeadersDict
 
 
 class Response(object):
@@ -37,22 +38,30 @@ class Response(object):
       action.im_self.response = self
     
     #: A :mod:`frame.dotdict.DotDict` that stores the response headers
-    self.headers = DotDict(config.response.default_headers)
-    self.headers.update({
+    self._headers = HeadersDict({
       'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0',
       'Pragma': 'no-cache'
     })
+    self._headers.update(config.response.default_headers)
     self.status = '200 OK'
     
     #: Additional keyword arguments to pass off to the controller action method
     #: when it is called
     self.additional_params = {}
     
+  @property
+  def headers(self):
+    return self._headers
+  
+  @headers.setter
+  def headers(self, value):
+    self.headers.clear()
+    self.headers.update(value)
+    
   @classmethod
   def from_data(cls, status, headers, body):
     response = cls(None, 'placeholder')
     response.status = status
-    response.headers = DotDict(config.response.default_headers)
     response.headers.update(headers)
     response.body = body
     return response

@@ -3,3 +3,5 @@
 build
 dist
 frame.egg-info
+.project
+.pydevproject
