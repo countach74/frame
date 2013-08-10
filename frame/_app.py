@@ -9,7 +9,7 @@ from threading import RLock
 from pkg_resources import iter_entry_points
 from threaddata import ThreadData
 
-# For jinja2 toolset
+# For template toolset
 from toolset import toolset
 
 # Import StaticDispatcher to retrieve static files
@@ -184,18 +184,7 @@ class App(Singleton):
         if key in ('controller', 'action', 'method'):
           del(params[key])
           
-      hooks = map(
-        lambda x: self.drivers.hook.load_driver(x, self, match.im_self),
-        config.hooks)
-      
-      hooks = sorted(hooks, key=lambda x: x.priority)
-
       response = Response(self, match, params)
-      
-      with contextlib.nested(*hooks):
-        for i in sorted(self.preprocessors, key=lambda x: x.priority):
-          i(self.request, response)
-        response.render()
       
       return response
 
@@ -220,31 +209,41 @@ class App(Singleton):
         response = e.response
       else:
         response = Error500().response
-
-    # Need to do something more elegant to handle generators/chunked encoding...
-    # Also need to come up with a better way to log chunked encodings
-    if type(response.body) is types.GeneratorType:
-      start_response(response.status, response.headers.items())
-      response_length = 0
-      for i in response.body:
-        yield str(i)
-        response_length += len(i)
-      logger.log_request(self.request, response, response_length)
-
-    else:
-      # Apply post processors
-      temp_data = {'response': response}
-
-      def apply_postprocessors():
-        for i in sorted(self.postprocessors, key=lambda x: x.priority):
-          new_response = i(self.request, temp_data['response'])
-          if new_response and isinstance(new_response, Response):
-            temp_data['response'] = new_response
-            apply_postprocessors()
-
-      apply_postprocessors()
-
-      response = temp_data['response']
+        
+    hooks = map(
+      lambda x: self.drivers.hook.load_driver(x, self, response.action.im_self),
+      config.hooks)
+    hooks.sort(key=lambda x: x.priority)
+    
+    with contextlib.nested(*hooks):
+      for i in self.preprocessors:
+        i(self.request, response)
+      response.render()
+      
+      # Need to do something more elegant to handle generators/chunked encoding...
+      # Also need to come up with a better way to log chunked encodings
+      if type(response.body) is types.GeneratorType:
+        start_response(response.status, response.headers.items())
+        response_length = 0
+        for i in response.body:
+          yield str(i)
+          response_length += len(i)
+        logger.log_request(self.request, response, response_length)
+  
+      else:
+        # Apply post processors
+        temp_data = {'response': response}
+  
+        def apply_postprocessors():
+          for i in self.postprocessors:
+            new_response = i(self.request, temp_data['response'])
+            if new_response and isinstance(new_response, Response):
+              temp_data['response'] = new_response
+              apply_postprocessors()
+  
+        apply_postprocessors()
+  
+        response = temp_data['response']
               
       # Deliver the goods
       start_response(response.status, response.headers.items())
@@ -278,6 +277,10 @@ class App(Singleton):
       self.postprocessors.append(self.drivers.postprocessor[i])
       if not hasattr(self.drivers.postprocessor[i], 'priority'):
         self.drivers.postprocessor[i].priority = 10
+
+    # Sort the pre/postprocessors by priority
+    self.preprocessors.sort(key=lambda x: x.priority)
+    self.postprocessors.sort(key=lambda x: x.priority)
 
     for mapping, path in config.static_map.items():
       logger.log_info("Mapping static directory: '%s' => '%s'" % (
