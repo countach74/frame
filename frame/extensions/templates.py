@@ -11,16 +11,12 @@ templates_config = DotDict({
   'globals': {},
   'filters': {},
   'jinja2': {
-    'loaders': [
-      PackageLoader('frame', 'templates')
-    ],
-    'extensions': [],
-    'suffix': '.html',
-    'directory': 'templates'
+    'environment': None
   },
-  'options': {
-    'loaders': []
-  }
+  'loaders': [PackageLoader('frame', 'templates')],
+  'directory': 'templates',
+  'suffix': '.html',
+  'extensions': ['jinja2.ext.do']
 })
 
 
@@ -53,12 +49,15 @@ class Jinja2Driver(TemplateDriver):
   def __init__(self, **options):
     TemplateDriver.__init__(self, **options)
 
-    loaders = list(templates_config.jinja2.loaders + options['loaders'])
-    loaders.insert(0, FileSystemLoader(templates_config.jinja2.directory))
+    loaders = list(options['loaders'])
+    loaders.insert(0, FileSystemLoader(options['directory']))
 
-    self.environment = Environment(
-      loader=ChoiceLoader(loaders),
-      extensions=templates_config.jinja2.extensions)
+    if templates_config.jinja2.environment:
+      self.environment = templates_config.jinja2.environment
+    else:
+      self.environment = Environment(
+        loader=ChoiceLoader(loaders),
+        extensions=options['extensions'])
 
   def render(self, template, data):
     return self.environment.get_template(template).render(**data)
@@ -81,8 +80,8 @@ class TemplateInterface(DriverInterface):
     self.app = _app.app
     DriverInterface.__init__(self, *args, **kwargs)
 
-  def init(self, driver, *args, **kwargs):
-    driver_object = driver(*args, **kwargs)
+  def init(self, driver, **options):
+    driver_object = driver(**options)
 
     for k, v in templates_config.globals.iteritems():
       driver_object.globals[k] = v
@@ -106,6 +105,8 @@ class TemplateInterface(DriverInterface):
 
 
 class TemplateHook(object):
+  priority = 100
+
   def __init__(self, app, controller):
     self.app = app
     self.controller = controller
@@ -121,11 +122,10 @@ def templatize(request, response):
   if isinstance(response.body, dict) or response.body is None:
     class_name = response.action.im_class.__name__
     action_name = response.action.__name__
-    driver_name = templates_config.driver
 
     template_path = os.path.join(
       class_name.lower(),
-      action_name + templates_config[driver_name].suffix
+      action_name + templates_config.suffix
     )   
 
     try:
@@ -184,7 +184,14 @@ def register_driver(drivers):
 
   def init_hook(app):
     current_driver = templates_config.driver
-    app.template_engine = drivers.template.load_current(**templates_config.options)
+    app.template_engine = drivers.template.load_current(
+      loaders=templates_config.loaders,
+      globals=templates_config.globals,
+      filters=templates_config.filters,
+      suffix=templates_config.suffix,
+      directory=templates_config.directory,
+      extensions=templates_config.extensions
+    )
 
   drivers.register('postprocessor', 'template', templatize)
   drivers.register('init_hook', 'template', init_hook)

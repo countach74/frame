@@ -190,6 +190,9 @@ class App(Singleton):
       hooks = map(
         lambda x: self.drivers.hook.load_driver(x, self, match.im_self),
         config.hooks)
+      
+      hooks = sorted(hooks, key=lambda x: x.priority)
+      print hooks
 
       response = Response(self, match, params)
       

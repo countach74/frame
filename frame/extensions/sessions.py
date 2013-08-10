@@ -16,6 +16,7 @@ import os
 from .._logger import logger
 from ..driverinterface import DriverInterface
 from threading import RLock
+from ..util import Hook
 
 
 sessions_config = DotDict({
@@ -473,7 +474,7 @@ class MemcacheSession(Session):
     self.db.set(self.prefix + key, '', time=-1)
     
     
-class SessionHook(object):
+class SessionHook(Hook):
   def __init__(self, app, controller):
     self.app = app
     self.controller = controller
