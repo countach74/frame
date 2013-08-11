@@ -194,7 +194,7 @@ class App(Singleton):
     if 'match' in self.thread_data:
       for i in self.preprocessors:
         i(self.request, response)
-        response.render()
+      response.render()
     
     # Need to do something more elegant to handle generators/chunked encoding...
     # Also need to come up with a better way to log chunked encodings

@@ -7,6 +7,7 @@ import sys
 
 class HelloWorld(frame.Controller):
   def index(self):
+    print 'index()'
     self.response.headers['Content-Type'] = 'text/plain'
     return 'hello, world'
 
