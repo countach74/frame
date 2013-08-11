@@ -12,7 +12,7 @@ class HelloWorld(frame.Controller):
     return 'hello, world'
 
   def other(self):
-    return {'cool': 'stuff'}
+    return "Hey, this is awesome"
 
   def throw_400(self):
     raise frame.Error400

@@ -4,7 +4,6 @@ from _routes import routes
 from errors import Error500, HTTPError
 import os
 import sys
-import types
 from threading import RLock
 from pkg_resources import iter_entry_points
 from threaddata import ThreadData
