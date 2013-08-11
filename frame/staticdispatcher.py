@@ -1,11 +1,10 @@
-from errors import Error404, Error401, Error400, Error416
+from errors import Error404, Error401, Error416
 import re
 import os
 import mimetypes
 import datetime
 import time
 from util import format_date, get_gmt_now
-from dotdict import DotDict
 from _config import config
 from response import Response
 from random import getrandbits
@@ -229,7 +228,7 @@ class StaticDispatcher(object):
 				
 				try:
 					st = os.stat(file_path)
-				except EnvironmentError, e:
+				except EnvironmentError:
 					pass
 				else:
 					last_modified = datetime.datetime.fromtimestamp(

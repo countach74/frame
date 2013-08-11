@@ -5,7 +5,7 @@ from frame._app import app
 from frame._config import config
 from frame.dotdict import DotDict
 from frame.errors import SessionLoadError, SessionSaveError
-from frame.sessions import SessionInterface, Session
+from frame.extensions.sessions import SessionInterface, Session
 from frame.response import Response
 
 

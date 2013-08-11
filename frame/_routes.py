@@ -4,7 +4,6 @@ from routes import Mapper
 from uuid import uuid4
 from util import Singleton
 import _app
-import errors
 
 
 class Routes(Singleton):
