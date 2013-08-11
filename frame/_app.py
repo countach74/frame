@@ -254,7 +254,10 @@ class App(Singleton):
       hooks = map(
         lambda x: self.drivers.hook.load_driver(x, self, response.action.im_self),
         config.hooks)
-      hooks.sort(key=lambda x: x.priority)
+      try:
+        hooks.sort(key=lambda x: x.priority)
+      except Exception:
+        response = Error500().response
     else:
       hooks = []
       

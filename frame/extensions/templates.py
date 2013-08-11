@@ -5,11 +5,14 @@ from jinja2 import Environment, ChoiceLoader, PackageLoader, FileSystemLoader
 from abc import ABCMeta, abstractmethod, abstractproperty
 import os
 from .. import errors
+from ..toolset import toolset
 
 
 templates_config = DotDict({
   'driver': 'jinja2',
-  'globals': {},
+  'globals': {
+    'tools': toolset
+  },
   'filters': {},
   'jinja2': {
     'environment': None
@@ -106,20 +109,6 @@ class TemplateInterface(DriverInterface):
 
 
 
-class TemplateHook(object):
-  priority = 100
-
-  def __init__(self, app, controller):
-    self.app = app
-    self.controller = controller
-
-  def __enter__(self):
-    self.controller.get_template = self.app.drivers.template.current.get_template
-
-  def __exit__(self, e_type, e_value, e_tb):
-    pass
-
-
 def templatize(request, response):
   if isinstance(response.body, dict) or response.body is None:
     class_name = response.action.im_class.__name__
@@ -168,13 +157,10 @@ def HTTPError_setup_response(self, status, headers, body):
 
 def register_config(config):
   config.templates = templates_config
-  config.hooks.append('template')
   config.postprocessors.append('template')
 
 
 def register_driver(drivers):
-  drivers.register('hook', 'template', TemplateHook)
-
   drivers.add_interface(
     'template',
     TemplateInterface,
@@ -196,7 +182,12 @@ def register_driver(drivers):
       extensions=templates_config.extensions
     )
 
+    from ..controller import Controller
+
+    def get_template(self, *args, **kwargs):
+      return app.template_engine.get_template(*args, **kwargs)
+
+    Controller.get_template = get_template
+
   drivers.register('postprocessor', 'template', templatize)
   drivers.register('init_hook', 'template', init_hook)
-
-

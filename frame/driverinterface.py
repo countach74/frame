@@ -1,3 +1,6 @@
+import _logger
+
+
 class DriverInterface(dict):
 	'''
 	A glorified dictionary to store the drivers. Provides some hooks to customize how the
@@ -21,6 +24,26 @@ class DriverInterface(dict):
 			return self[key]
 		except KeyError:
 			raise AttributeError(key)
+
+	def __getitem__(self, key):
+		class DummyDriver(object):
+			def __init__(self, *args, **kwargs):
+				pass
+
+			def __enter__(self):
+				pass
+
+			def __exit__(self, *args, **kwargs):
+				pass
+
+			def __getattr__(self, key):
+				return None
+
+		if key in self:
+			return dict.__getitem__(self, key)
+		else:
+			_logger.logger.log_error("Failed to access driver '%s'" % key)
+			return DummyDriver
 		
 	def __repr__(self):
 		return "<DriverInterface(%s)>" % ', '.join(self.keys())
