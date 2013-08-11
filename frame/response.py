@@ -1,8 +1,8 @@
-from errors import Error404
 import datetime
 from _config import config
 from util import format_date, get_gmt_now
 from headersdict import HeadersDict
+import errors
 
 
 class Response(object):
@@ -18,9 +18,9 @@ class Response(object):
   '''
   
   def __init__(self, app, action, params={}):
-    if not action:
-      raise Error404
-
+    if action is None:
+      raise errors.Error404
+    
     #: The Frame application
     self.app = app
     self.action = action
@@ -58,7 +58,7 @@ class Response(object):
     
   @classmethod
   def from_data(cls, status, headers, body):
-    response = cls(None, 'placeholder')
+    response = cls(None, False)
     response.status = status
     response.headers.update(headers)
     response.body = body
@@ -121,21 +121,22 @@ class Response(object):
     
     # Must render the page before we send start_response; otherwise, controller-set
     # headers will not get set in time.
-    params = dict(self.params.items() + self.additional_params.items())
-    result = self.action(**params)
+    if self.action:
+      params = dict(self.params.items() + self.additional_params.items())
+      result = self.action(**params)
+      
+      '''
+      if result is None or isinstance(result, dict):
+        method_name = self.action.__name__
+        
+        template_dir = self.action.im_self.__class__.__name__.lower()
+        template_path = os.path.join(template_dir, method_name + config.templates.extension)
+        
+        result = self.action.im_self.get_template(template_path).render(
+          result or {})
+      '''
     
-    '''
-    if result is None or isinstance(result, dict):
-      method_name = self.action.__name__
-      
-      template_dir = self.action.im_self.__class__.__name__.lower()
-      template_path = os.path.join(template_dir, method_name + config.templates.extension)
-      
-      result = self.action.im_self.get_template(template_path).render(
-        result or {})
-    '''
-
-    self._body = result
+      self._body = result
 
   @property
   def body(self):

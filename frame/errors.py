@@ -14,7 +14,6 @@ from _logger import logger
 from _config import config
 from dotdict import DotDict
 import response
-from jinja2.exceptions import TemplateNotFound
 
 
 _default_error_headers = dict(config.response.default_headers)
@@ -49,8 +48,7 @@ class HTTPError(Exception):
     :param headers: Headers to apply to the error
     '''
     
-    base_headers = DotDict(_default_error_headers)
-    base_headers.update(headers)
+    base_headers = dict(headers)
     
     #: Stores any extra positional arguments; not actually used as of now
     self.args = args
@@ -61,8 +59,8 @@ class HTTPError(Exception):
     self.setup_response(status, base_headers, body)
 
   def setup_response(self, status, headers, body):
-    import response
-    data = dict(self.kwargs)
+    data = {'status': status}
+    data.update(self.kwargs)
     if 'message' not in data:
       data['message'] = ''
 
@@ -77,7 +75,7 @@ class HTTPError(Exception):
     <h1>{status}</h1>
     {message}
   </body>
-</html>'''.format(status=status, **data)
+</html>'''.format(**data)
     
     self.response = response.Response.from_data(status, headers, body)
         

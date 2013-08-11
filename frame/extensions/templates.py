@@ -1,5 +1,6 @@
 from ..driverinterface import DriverInterface
 from ..dotdict import DotDict
+from .._logger import logger
 from jinja2 import Environment, ChoiceLoader, PackageLoader, FileSystemLoader
 from abc import ABCMeta, abstractmethod, abstractproperty
 import os
@@ -22,6 +23,7 @@ templates_config = DotDict({
 
 class TemplateDriver(object):
   __metaclass__ = ABCMeta
+
   def __init__(self, **options):
     self.options = options
 
@@ -137,7 +139,7 @@ def templatize(request, response):
 templatize.priority = 50
 
 
-original_HTTPError_setup_response = errors.Error500.setup_response
+original_HTTPError_setup_response = errors.HTTPError.setup_response
 
 
 def HTTPError_setup_response(self, status, headers, body):
@@ -157,7 +159,7 @@ def HTTPError_setup_response(self, status, headers, body):
       body = app.template_engine.render('__errors/jinja2/generic.html',
         self.kwargs)
     except Exception, e:
-      app.logger.log_warning('Reverting to default error template.')
+      logger.log_warning('Reverting to default error template.')
       original_HTTPError_setup_response(self, status, headers, body)
       return
 
@@ -185,7 +187,6 @@ def register_driver(drivers):
   errors.HTTPError.setup_response = HTTPError_setup_response
 
   def init_hook(app):
-    current_driver = templates_config.driver
     app.template_engine = drivers.template.load_current(
       loaders=templates_config.loaders,
       globals=templates_config.globals,

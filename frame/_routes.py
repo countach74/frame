@@ -2,10 +2,9 @@ import re
 import os
 from routes import Mapper
 from uuid import uuid4
-from util import make_resource, Singleton
-from _logger import logger
-import threading
+from util import Singleton
 import _app
+import errors
 
 
 class Routes(Singleton):
@@ -156,7 +155,8 @@ class Routes(Singleton):
 			return (action, match)
 
 		else:
-			return None
+			#return None
+			raise errors.Error404
 			
 	@property
 	def current_controller(self):
