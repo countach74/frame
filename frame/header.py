@@ -11,6 +11,6 @@ class Header(object):
   
   def __eq__(self, other):
     if isinstance(other, str):
-      return self.key == other.key
+      return self.value == other
     else:
       return self is other

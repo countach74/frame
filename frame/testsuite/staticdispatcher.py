@@ -32,11 +32,11 @@ class TestStaticDispatcher(unittest.TestCase):
 		}
 		
 		response = self.static_map.match(environ)
-		required_headers = ('Last-Modified', 'Connection', 'Content-Type', 'Server')
+		required_headers = ('Last-Modified', 'Content-Type', 'Server')
 		
 		# Assert that things come back as they should.
 		assert response.status == '200 OK'
-		assert all((i in response.headers for i in required_headers))
+		assert all(i in response.headers for i in required_headers)
 		assert self.file_data == ''.join(response.body)
 		
 	def test_not_found(self):

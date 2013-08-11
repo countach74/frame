@@ -8,6 +8,8 @@ from frame.errors import SessionLoadError, SessionSaveError
 from frame.extensions.sessions import SessionInterface, Session
 from frame.response import Response
 
+app.load_drivers()
+
 
 class TestSession(unittest.TestCase):
 	def setUp(self):
@@ -15,29 +17,35 @@ class TestSession(unittest.TestCase):
 			'headers': {},
 			'cookies': {}
 		})
-		app.response = Response(app, 'junk')
-		self.session_interface = SessionInterface(app)
+
+		app.response = Response.from_data(
+			'200 OK',
+			{'Content-Type': 'text/html'},
+			'This is a test response'
+		)
+
+		self.session_interface = app.drivers.session
 		
 	def test_session_load_error(self):
 		app.request.cookies['FrameSession'] = Session.make_session_key()
 		with self.assertRaises(SessionLoadError):
-			session = self.session_interface.backend(app, self.session_interface)
+			session = self.session_interface.load_current()
 			
 	def test_session_force(self):
-		session = self.session_interface.backend(app, self.session_interface, True)
+		session = self.session_interface.current(app, self.session_interface, True)
 		
 	def test_session_save(self):
 		# Simulate first request
-		session = self.session_interface.get_session()
+		session = self.session_interface.load_current()
 		session['stuff'] = 'a test'
 		app.request.cookies['FrameSession'] = session._key
 		session.commit()
 		
 		# Simulate second request
-		session = self.session_interface.get_session()
+		session = self.session_interface.load_current()
 		
 		# Assert that session data was indeed saved
-		self.assertEqual(session['stuff'], 'a test')
+		assert session['stuff'] == 'a test'
 		
 		
 class TestMemorySession(TestSession):
