@@ -155,8 +155,7 @@ class Routes(Singleton):
 			return (action, match)
 
 		else:
-			#return None
-			raise errors.Error404
+			return None
 			
 	@property
 	def current_controller(self):
