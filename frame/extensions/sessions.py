@@ -475,10 +475,8 @@ class MemcacheSession(Session):
     
     
 class SessionHook(Hook):
-  def __init__(self, app, controller):
-    self.app = app
-    self.controller = controller
-    
+  priority = 100
+  
   def __enter__(self):
     try:
       self.app.session = self.app.drivers.session.get_session()
@@ -486,8 +484,8 @@ class SessionHook(Hook):
     except Exception, e:
       raise Error500
     
-    if self.app.drivers.template:
-      self.app.drivers.template.globals['session'] = self.app.session
+    if hasattr(self.app, 'template_engine'):
+      self.app.template_engine.globals['session'] = self.app.session
     
   def __exit__(self, e_type, e_value, e_tb):
     self.app.drivers.session.save_session(self.app.session)

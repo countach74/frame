@@ -2,6 +2,7 @@ import frame
 
 
 frame.config.templates.driver = 'jade'
+frame.config.templates.suffix = '.jade'
 
 
 class Root(frame.Controller):

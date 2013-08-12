@@ -1,10 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 from setuptools import setup
 
 setup(
   name="frame",
-  version="0.3.1",
+  version="0.3.2",
   author="Tim Radke",
   author_email="countach74@gmail.com",
   description="A very simple, lightweight MVC-based web framework.",
@@ -21,17 +21,14 @@ setup(
     'frame.drivers': [
       'session = frame.extensions.sessions:register_driver',
       'templates = frame.extensions.templates:register_driver[templates]',
-      'jade = frame.extensions.jade:register_driver[jade]'
     ],
     'frame.config': [
       'session = frame.extensions.sessions:register_config',
       'templates = frame.extensions.templates:register_config[templates]',
-      'jade = frame.extensions.jade:register_config[jade]'
     ]
   },
   extras_require={
-    'templates': [],
-    'jade': ['pyjade']
+    'templates': ['jinja2']
   },
   package_data={
     'frame': [
@@ -50,5 +47,5 @@ setup(
       'testsuite/templates/controller/*.html',
     ]
   },
-  install_requires=['Jinja2', 'Routes', 'pytz', 'multipart']
+  install_requires=['Routes', 'pytz', 'multipart']
 )

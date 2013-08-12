@@ -29,6 +29,7 @@ class TemplateDriver(object):
 
   def __init__(self, **options):
     self.options = options
+    self.config = templates_config
 
   @abstractmethod
   def get_template(self, template, variables={}):
